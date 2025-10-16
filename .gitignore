@@ -1,0 +1,8 @@
+venv/
+.old/
+.tmp/
+.claude/
+.env
+igcse_progress.db
+__pycache__/
+github-deployment/

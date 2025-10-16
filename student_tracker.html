@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IGCSE Mathematics (0580) Student Progress Tracker</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .auth-section {
+      background: #e7f3ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px auto;
+      text-align: center;
+      border-left: 4px solid #667eea;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .centered {
+      margin: 0 auto;
+    }
+
+    .auth-section h3 {
+      margin-bottom: 15px;
+      color: #495057;
+    }
+
+    .user-info {
+      background: #d4edda;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid #28a745;
+    }
+
+    .user-details {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #28a745;
+    }
+
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: #c82333;
+    }
+
+    .progress-container {
+      background: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #e9ecef;
+      transition: all 0.3s ease;
+      transform: translateY(0);
+    }
+
+    .progress-container.sticky {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(248, 249, 250, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      animation: slideDown 0.3s ease;
+    }
+
+    .progress-placeholder {
+      height: 0;
+      transition: height 0.3s ease;
+    }
+
+    .progress-placeholder.visible {
+      height: 100px;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+      }
+
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .syllabus-content {
+      padding: 30px;
+    }
+
+    .progress-bar {
+      background: #e9ecef;
+      border-radius: 25px;
+      height: 25px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #28a745, #20c997);
+      height: 100%;
+      border-radius: 25px;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .percentage {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #495057;
+    }
+
+    .count {
+      color: #6c757d;
+      font-size: 1rem;
+    }
+
+    .topic-section {
+      margin-bottom: 30px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: #495057;
+      color: white;
+      padding: 15px 20px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-header:hover {
+      background: #343a40;
+    }
+
+    .section-content {
+      padding: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .section-content.expanded {
+      padding: 20px;
+      max-height: 2000px;
+    }
+
+    .topic-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid #f8f9fa;
+    }
+
+    .topic-item:last-child {
+      border-bottom: none;
+    }
+
+    .topic-checkbox {
+      margin-right: 15px;
+      margin-top: 2px;
+      transform: scale(1.2);
+    }
+
+    .topic-label {
+      flex: 1;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .topic-label.completed {
+      text-decoration: line-through;
+      color: #6c757d;
+    }
+
+    .submit-section {
+      background: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .submit-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .footer {
+      background: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .status-message {
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .status-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        border-radius: 5px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .syllabus-content {
+        padding: 15px;
+      }
+
+      .progress-container {
+        padding: 15px;
+      }
+
+      .user-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>IGCSE Mathematics (0580)</h1>
+      <p>Student Progress Tracker - 2025-2027</p>
+    </div>
+
+    <!-- Authentication Section -->
+    <div class="auth-section" id="authSection">
+      <h3>Sign in with Google to track your progress</h3>
+      <div class="centered" id="g_id_onload"
+        data-client_id="917775460589-0sb14a7k4rmbdf319evuober7ck655b7.apps.googleusercontent.com" data-context="signin"
+        data-ux_mode="popup" data-callback="handleCredentialResponse" data-auto_prompt="false" data-itp_support="true">
+      </div>
+      <div class="g_id_signin centered" data-type="standard" data-shape="rectangular" data-theme="outline"
+        data-text="signin_with" data-size="large" data-logo_alignment="left">
+      </div>
+      <p style="margin-top: 15px; font-size: 0.9rem; color: #6c757d;">
+        <strong>Note:</strong> This tracker is served from the /tracker path on the main domain
+      </p>
+    </div>
+
+    <!-- User Info Section -->
+
+    <div class="user-info hidden" id="userInfo">
+      <div class="user-details">
+        <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+        <div>
+          <strong id="userName"></strong>
+          <div style="font-size: 0.9rem; color: #6c757d;">
+            <span id="userEmail"></span>
+          </div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Main Content (Hidden until authenticated) -->
+    <div id="mainContent" class="hidden">
+      <div class="progress-container" id="progressContainer">
+        <h3>Your Overall Progress <small>(Weighted by Chapters)</small></h3>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+        </div>
+        <div class="progress-stats">
+          <div class="percentage" id="percentage">0%</div>
+          <div class="count" id="progressCount">0/0 topics completed</div>
+        </div>
+        <div style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
+          Each chapter contributes equally to overall progress
+        </div>
+      </div>
+      <div class="progress-placeholder" id="progressPlaceholder"></div>
+
+      <div class="syllabus-content">
+        <!-- Syllabus sections will be dynamically generated -->
+        <div id="syllabusContent"></div>
+
+        <div class="submit-section">
+          <div id="statusMessage"></div>
+          <button type="button" class="submit-btn" onclick="submitProgress()" id="submitBtn">
+            Send Progress Summary to Teacher
+          </button>
+          <p style="margin-top: 15px; color: #6c757d; font-size: 0.9rem;">
+            Your progress is automatically saved. Click to send a summary to your teacher.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>IGCSE Mathematics (0580) Student Progress Tracker - Based on 2025-2027 Syllabus</p>
+      <p><small>Progress is automatically saved per user account</small></p>
+    </div>
+  </div>
+
+  <script>
+    // Unified API Configuration for Flask Backend
+    const API_CONFIG = {
+      BASE_URL: '/tracker',
+      SESSION_TIMEOUT: 60 * 60 * 1000 // 1 hour in milliseconds
+    };
+
+    // Global variables
+    let currentUser = null;
+    let sessionTimer = null;
+    let currentSessionId = null;
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function () {
+      checkExistingSession();
+      setupStickyAnimation();
+    });
+
+    // Check for existing user session
+    function checkExistingSession() {
+      const userSession = localStorage.getItem('igcse_user_session');
+
+      if (userSession) {
+        try {
+          const session = JSON.parse(userSession);
+          const now = Date.now();
+
+          // Check if session is still valid
+          if (session.expiresAt > now) {
+            currentUser = session.user;
+            showAuthenticatedUI();
+            loadUserProgress();
+            startSessionTimer();
+            return;
+          } else {
+            // Session expired
+            localStorage.removeItem('igcse_user_session');
+            localStorage.removeItem('igcse_user_progress');
+          }
+        } catch (error) {
+          console.error('Error parsing user session:', error);
+          clearUserSession();
+        }
+      }
+
+      showAuthenticationUI();
+    }
+
+    // Handle Google OAuth response
+    function handleCredentialResponse(response) {
+      console.log('Google OAuth response received:', response);
+
+      if (!response || !response.credential) {
+        console.error('Invalid OAuth response:', response);
+        showStatus('Authentication failed: Invalid response from Google. Please try again.', 'error');
+        return;
+      }
+
+      try {
+        // Decode the JWT token to get user info
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        console.log('Decoded JWT payload:', payload);
+
+        currentUser = {
+          id: payload.sub,
+          name: payload.name,
+          email: payload.email,
+          picture: payload.picture,
+          loginTime: Date.now()
+        };
+
+        // Create session with expiration
+        const session = {
+          user: currentUser,
+          expiresAt: Date.now() + API_CONFIG.SESSION_TIMEOUT
+        };
+
+        localStorage.setItem('igcse_user_session', JSON.stringify(session));
+
+        // Initialize session with backend
+        initializeBackendSession();
+
+        showAuthenticatedUI();
+        loadUserProgress();
+        startSessionTimer();
+
+        showStatus('Successfully signed in!', 'success');
+      } catch (error) {
+        console.error('Authentication error:', error);
+        showStatus('Authentication failed: ' + error.message, 'error');
+      }
+    }
+
+    // Initialize session with backend
+    async function initializeBackendSession() {
+      try {
+        // For now, we'll create a simple session ID
+        // In a production system, this would call a session creation endpoint
+        currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      } catch (error) {
+        console.error('Session initialization error:', error);
+      }
+    }
+
+    // Show authentication UI
+    function showAuthenticationUI() {
+      document.getElementById('authSection').classList.remove('hidden');
+      document.getElementById('userInfo').classList.add('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+    }
+
+    // Show authenticated UI
+    function showAuthenticatedUI() {
+      if (!currentUser) return;
+
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+
+      // Update user info
+      document.getElementById('userName').textContent = currentUser.name;
+      document.getElementById('userEmail').textContent = currentUser.email;
+      document.getElementById('userAvatar').src = currentUser.picture;
+
+      // Load syllabus content
+      loadSyllabusContent();
+    }
+
+    // Logout function
+    function logout() {
+      if (confirm('Are you sure you want to log out? Your progress will be saved.')) {
+        clearUserSession();
+        showAuthenticationUI();
+        showStatus('Successfully logged out.', 'success');
+      }
+    }
+
+    // Clear user session
+    function clearUserSession() {
+      currentUser = null;
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+        sessionTimer = null;
+      }
+      localStorage.removeItem('igcse_user_session');
+    }
+
+    // Start session timer
+    function startSessionTimer() {
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+
+      sessionTimer = setTimeout(() => {
+        showStatus('Your session has expired. Please sign in again.', 'warning');
+        clearUserSession();
+        showAuthenticationUI();
+      }, API_CONFIG.SESSION_TIMEOUT);
+    }
+
+    // Load syllabus content from Flask backend
+    async function loadSyllabusContent() {
+      try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/syllabus`,
+          {
+            method: "GET",
+            headers: {
+              "accept": "application/json"
+            }
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+
+        const syllabusData = await response.json();
+        console.log(syllabusData)
+
+        const syllabusContent = document.getElementById('syllabusContent');
+        syllabusContent.innerHTML = '';
+
+        syllabusData.data.forEach(chapter => {
+          const section = document.createElement('div');
+          section.className = 'topic-section';
+          section.innerHTML = `
+                      <div class="section-header" onclick="toggleSection(this)">
+                          <span>${chapter.number}. ${chapter.name}</span>
+                          <span>▼</span>
+                      </div>
+                      <div class="section-content">
+                          ${chapter.topics.map(topic => `
+                              <div class="topic-item">
+                                  <input type="checkbox" class="topic-checkbox" id="${topic.id}" onchange="handleTopicChange(this)">
+                                  <label class="topic-label" for="${topic.id}">${topic.number}. ${topic.name}</label>
+                              </div>
+                          `).join('')}
+                      </div>
+                  `;
+          syllabusContent.appendChild(section);
+        });
+
+        // Expand all sections by default
+        const sections = document.querySelectorAll('.section-content');
+        sections.forEach(section => {
+          section.classList.add('expanded');
+          const header = section.previousElementSibling;
+          header.querySelector('span:last-child').textContent = '▲';
+        });
+
+        // Load initial progress from backend
+        loadInitialProgress();
+      } catch (error) {
+        console.error('Error loading syllabus:', error);
+        showStatus('Failed to load syllabus data. Please try again.', 'error');
+      }
+    }
+
+    // Load initial progress from backend
+    async function loadInitialProgress() {
+      if (!currentUser) return;
+
+      try {
+        const params = new URLSearchParams({
+          student_email: currentUser.email
+        });
+
+        const response = await fetch(`${API_CONFIG.BASE_URL}/student-progress?${params}`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          updateProgressFromBackend(result.progress);
+        }
+      } catch (error) {
+        console.error('Error loading initial progress:', error);
+      }
+    }
+
+    // Update progress UI with data from backend
+    function updateProgressFromBackend(progressData) {
+      if (!progressData) return;
+
+      // Update checkboxes based on backend data
+      if (progressData.topics) {
+        progressData.topics.forEach(topic => {
+          const checkbox = document.getElementById(topic.id);
+          if (checkbox) {
+            checkbox.checked = topic.completed;
+            const label = checkbox.nextElementSibling;
+            if (topic.completed) {
+              label.classList.add('completed');
+            } else {
+              label.classList.remove('completed');
+            }
+          }
+        });
+      }
+
+      // Update progress bar and stats
+      const progressFill = document.getElementById('progressFill');
+      const percentageDisplay = document.getElementById('percentage');
+      const progressCount = document.getElementById('progressCount');
+
+      if (progressData.overall_progress) {
+        const percentage = Math.round(progressData.overall_progress.percentage);
+        progressFill.style.width = percentage + '%';
+        progressFill.textContent = percentage + '%';
+        percentageDisplay.textContent = percentage + '%';
+        progressCount.textContent = progressData.overall_progress.completed + '/' + progressData.overall_progress.total + ' topics completed';
+      }
+
+      // Save progress to local storage
+      saveUserProgress();
+    }
+
+    // Toggle section expansion
+    function toggleSection(header) {
+      const content = header.nextElementSibling;
+      const arrow = header.querySelector('span:last-child');
+
+      if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        arrow.textContent = '▼';
+      } else {
+        content.classList.add('expanded');
+        arrow.textContent = '▲';
+      }
+    }
+
+    // Progress calculation is now handled entirely by the Flask backend
+    // Frontend only displays data received from backend API calls
+
+    // Handle checkbox change with real-time submission to Flask backend
+    function handleTopicChange(checkbox) {
+      // Get topic ID from checkbox ID
+      const topicId = checkbox.id;
+      const isCompleted = checkbox.checked;
+
+      // Submit individual topic progress to Flask backend
+      submitTopicProgress(topicId, isCompleted);
+    }
+
+    // Save user progress to local storage
+    function saveUserProgress() {
+      if (!currentUser) return;
+
+      const checkboxes = document.querySelectorAll('.topic-checkbox');
+      const progress = {};
+
+      checkboxes.forEach((checkbox, index) => {
+        progress['topic_' + index] = checkbox.checked;
+      });
+
+      const userProgress = {
+        userId: currentUser.id,
+        progress: progress,
+        lastUpdated: Date.now()
+      };
+
+      localStorage.setItem('igcse_user_progress', JSON.stringify(userProgress));
+    }
+
+    // Load user progress from local storage
+    function loadUserProgress() {
+      if (!currentUser) return;
+
+      const savedProgress = localStorage.getItem('igcse_user_progress');
+
+      if (savedProgress) {
+        try {
+          const userProgress = JSON.parse(savedProgress);
+
+          // Only load if it's for the current user
+          if (userProgress.userId === currentUser.id) {
+            const progress = userProgress.progress;
+            const checkboxes = document.querySelectorAll('.topic-checkbox');
+
+            checkboxes.forEach((checkbox, index) => {
+              const key = 'topic_' + index;
+              if (progress[key]) {
+                checkbox.checked = true;
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error loading user progress:', error);
+        }
+      }
+    }
+
+    // Sticky animation setup
+    function setupStickyAnimation() {
+      const progressContainer = document.getElementById('progressContainer');
+      const progressPlaceholder = document.getElementById('progressPlaceholder');
+      const header = document.querySelector('.header');
+
+      if (!progressContainer || !progressPlaceholder || !header) return;
+
+      // Calculate the offset where sticky should start
+      const stickyStart = header.offsetHeight;
+
+      function handleScroll() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+        if (scrollTop > stickyStart) {
+          if (!progressContainer.classList.contains('sticky')) {
+            progressContainer.classList.add('sticky');
+            progressPlaceholder.classList.add('visible');
+          }
+        } else {
+          if (progressContainer.classList.contains('sticky')) {
+            progressContainer.classList.remove('sticky');
+            progressPlaceholder.classList.remove('visible');
+          }
+        }
+      }
+
+      // Add scroll listener
+      window.addEventListener('scroll', handleScroll);
+
+      // Initial check
+      handleScroll();
+    }
+
+    // Submit individual topic progress to Flask backend via POST
+    async function submitTopicProgress(topicId, isCompleted) {
+      if (!currentUser) {
+        showStatus('Please sign in to submit progress.', 'error');
+        return;
+      }
+
+      try {
+        // Prepare data for POST request to Flask backend
+        const requestData = {
+          student_email: currentUser.email,
+          student_name: currentUser.name,
+          topic_id: topicId,
+          is_completed: isCompleted
+        };
+
+        const response = await fetch(`${API_CONFIG.BASE_URL}/update-topic`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update UI with data from backend
+          updateProgressFromBackend(result);
+          // Show success status briefly
+
+
+
+          showStatus('Progress saved!', 'success');
+        } else {
+          throw new Error(result.error || 'Update failed');
+        }
+      } catch (error) {
+        console.error('Topic update error:', error);
+        // Don't show error for every checkbox change to avoid spam
+      }
+    }
+
+    // Submit overall progress summary to teacher (optional feature)
+    async function submitProgress() {
+      if (!currentUser) {
+        showStatus('Please sign in to submit progress.', 'error');
+        return;
+      }
+
+      // Show loading state
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        // Get current progress from backend
+        const params = new URLSearchParams({
+          student_email: currentUser.email
+        });
+
+        const response = await fetch(`${API_CONFIG.BASE_URL}/student-progress?${params}`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          // In a real implementation, this would trigger an email or notification to the teacher
+          const progress = result.progress.overall_progress;
+          showStatus(`Progress summary sent to teacher! You have completed ${progress.completed}/${progress.total} topics (${Math.round(progress.percentage)}%).`, 'success');
+        } else {
+          throw new Error(result.error || 'Submission failed');
+        }
+      } catch (error) {
+        showStatus('Failed to submit progress: ' + error.message, 'error');
+        console.error('Submission error:', error);
+      } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Progress Summary to Teacher';
+      }
+    }
+
+    // Show status message
+    function showStatus(message, type) {
+      const statusElement = document.getElementById('statusMessage');
+      statusElement.textContent = message;
+      statusElement.className = 'status-message';
+      statusElement.classList.add('status-' + type);
+
+      // Auto-hide success messages after 5 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          statusElement.textContent = '';
+          statusElement.className = 'status-message';
+        }, 5000);
+      }
+    }
+
+    // Auto-save progress every 30 seconds
+    setInterval(() => {
+      if (currentUser) {
+        saveUserProgress();
+      }
+    }, 30000);
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && currentUser) {
+        // Check session validity when page becomes visible again
+        const userSession = localStorage.getItem('igcse_user_session');
+        if (userSession) {
+          try {
+            const session = JSON.parse(userSession);
+            if (session.expiresAt <= Date.now()) {
+              showStatus('Your session has expired. Please sign in again.', 'warning');
+              clearUserSession();
+              showAuthenticationUI();
+            }
+          } catch (error) {
+            console.error('Error checking session:', error);
+          }
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+# IGCSE Mathematics (0580) Syllabus 2025-2027
+# Format: Chapter|Subchapter|Weight
+
+# Number
+Number|Integers, decimals and fractions|5
+Number|Indices, standard form and surds|5
+Number|Percentages|5
+Number|Ratio and proportion|5
+
+# Algebra
+Algebra|Algebraic manipulation|10
+Algebra|Equations and inequalities|10
+Algebra|Sequences|5
+Algebra|Graphs of functions|10
+
+# Coordinate geometry
+Coordinate geometry|Coordinates|5
+Coordinate geometry|Straight line graphs|5
+
+# Geometry
+Geometry|Geometrical terms and relationships|5
+Geometry|Geometrical constructions|5
+Geometry|Symmetry|5
+Geometry|Angle properties|5
+Geometry|Loci|5
+
+# Mensuration
+Mensuration|Measures|5
+Mensuration|Perimeter and area|10
+Mensuration|Volume and surface area|10
+
+# Trigonometry
+Trigonometry|Bearings|5
+Trigonometry|Pythagoras' theorem|5
+Trigonometry|Trigonometric ratios|10
+
+# Vectors and transformations
+Vectors and transformations|Vectors|5
+Vectors and transformations|Transformations|10
+
+# Probability
+Probability|Probability|10
+
+# Statistics
+Statistics|Statistics|10
