@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IGCSE Mathematics (0580) Teacher Dashboard</title>
+  <title>Multi-Syllabus Teacher Dashboard</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -159,6 +159,7 @@
       border: 1px solid #e9ecef;
       border-radius: 8px;
       overflow: hidden;
+      margin-bottom: 30px;
     }
 
     .section-header {
@@ -176,16 +177,12 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
-    .search-input {
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-
-    .filter-select {
+    .search-input,
+    .filter-select,
+    .syllabus-select {
       padding: 8px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
@@ -206,6 +203,8 @@
       padding: 20px;
       background: white;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
     }
 
     .student-card:hover {
@@ -230,6 +229,21 @@
       color: #6c757d;
       font-size: 0.9rem;
       margin-top: 2px;
+    }
+
+    .progress-info {
+      text-align: right;
+    }
+
+    .progress-percentage {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .progress-label {
+      font-size: 0.8rem;
+      color: #6c757d;
     }
 
     .progress-bar {
@@ -318,6 +332,62 @@
       background: #0056b3;
     }
 
+    .assign-syllabus-section {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+
+    .assign-syllabus-section h3 {
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+
+    .assign-syllabus-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: flex-end;
+    }
+
+    .assign-syllabus-form div {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .assign-syllabus-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .assign-syllabus-form input[type="email"],
+    .assign-syllabus-form select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    .assign-syllabus-form button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .assign-syllabus-form button:hover {
+      background: #218838;
+    }
+
     @media (max-width: 768px) {
       .container {
         margin: 10px;
@@ -350,6 +420,11 @@
         gap: 10px;
         text-align: center;
       }
+
+      .assign-syllabus-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
     }
   </style>
 </head>
@@ -357,8 +432,8 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>IGCSE Mathematics (0580)</h1>
-      <p>Teacher Dashboard - Monitor Student Progress</p>
+      <h1>Teacher Dashboard</h1>
+      <p>Multi-Syllabus Student Progress & Assignments</p>
     </div>
 
     <!-- Authentication Section -->
@@ -398,30 +473,53 @@
           <div class="stat-card">
             <h3>Total Students</h3>
             <div class="stat-value" id="totalStudents">0</div>
-            <div class="stat-change positive" id="studentsChange">+0 this week</div>
+            <div class="stat-change positive" id="studentsChange"></div>
           </div>
           <div class="stat-card">
-            <h3>Average Progress</h3>
+            <h3>Average Progress (Selected Syllabus)</h3>
             <div class="stat-value" id="averageProgress">0%</div>
-            <div class="stat-change positive" id="progressChange">+0% from last week</div>
+            <div class="stat-change positive" id="progressChange"></div>
           </div>
           <div class="stat-card">
-            <h3>Active Submissions</h3>
-            <div class="stat-value" id="totalSubmissions">0</div>
-            <div class="stat-change positive" id="submissionsChange">+0 today</div>
+            <h3>Syllabuses Assigned</h3>
+            <div class="stat-value" id="syllabusesAssigned">0</div>
+            <div class="stat-change positive" id="assignmentsChange"></div>
           </div>
           <div class="stat-card">
-            <h3>Completion Rate</h3>
+            <h3>Completion Rate (Selected Syllabus)</h3>
             <div class="stat-value" id="completionRate">0%</div>
-            <div class="stat-change positive" id="completionChange">+0% from last month</div>
+            <div class="stat-change positive" id="completionChange"></div>
           </div>
         </div>
+
+        <!-- Assign Syllabus Section -->
+        <div class="assign-syllabus-section">
+          <h3>Assign Syllabus to Student</h3>
+          <div id="assignStatusMessage"></div>
+          <form class="assign-syllabus-form" onsubmit="assignSyllabus(event)">
+            <div>
+              <label for="studentEmailSelect">Student:</label>
+              <select id="studentEmailSelect" required>
+                <option value="">Select a student</option>
+              </select>
+            </div>
+            <div>
+              <label for="assignSyllabusSelect">Syllabus to Assign:</label>
+              <select id="assignSyllabusSelect" required></select>
+            </div>
+            <button type="submit">Assign Syllabus</button>
+          </form>
+        </div>
+
 
         <!-- Students Section -->
         <div class="students-section">
           <div class="section-header">
-            <span>Student Progress Overview</span>
+            <span>Student Progress Overview - <span id="currentSyllabusName">All Syllabuses</span></span>
             <div class="controls">
+              <select class="syllabus-select" id="viewSyllabusSelect" onchange="filterStudentsBySyllabus()">
+                <option value="all">All Syllabuses</option>
+              </select>
               <input type="text" class="search-input" id="searchInput" placeholder="Search students..."
                 onkeyup="filterStudents()">
               <select class="filter-select" id="progressFilter" onchange="filterStudents()">
@@ -441,7 +539,7 @@
 
         <!-- Charts Section -->
         <div class="chart-section">
-          <h3>Progress Distribution</h3>
+          <h3>Progress Distribution (Selected Syllabus)</h3>
           <div class="chart-container">
             <canvas id="progressChart"></canvas>
           </div>
@@ -451,8 +549,8 @@
 
     <div class="footer"
       style="background: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; border-top: 1px solid #e9ecef;">
-      <p>IGCSE Mathematics (0580) Teacher Dashboard - Based on 2025-2027 Syllabus</p>
-      <p><small>Real-time student progress monitoring and analytics</small></p>
+      <p>Multi-Syllabus Teacher Dashboard - Real-time student progress monitoring and analytics</p>
+      <p><small>Progress data is automatically refreshed</small></p>
     </div>
   </div>
 
@@ -467,8 +565,12 @@
     let currentUser = null;
     let sessionTimer = null;
     let currentSessionId = null;
-    let allStudents = [];
+    let allStudentsProgress = []; // Stores all students progress across all syllabuses
+    let allSyllabuses = []; // Stores all available syllabuses
+    let displayedStudents = []; // Students currently displayed after filtering
     let progressChart = null;
+    let selectedViewSyllabusId = 'all'; // Default to viewing all syllabuses
+
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', function () {
@@ -491,14 +593,12 @@
             loadDashboardData();
             startSessionTimer();
             return;
-          } else {
-            // Session expired
-            localStorage.removeItem('igcse_teacher_session');
           }
         } catch (error) {
           console.error('Error parsing user session:', error);
-          clearUserSession();
         }
+        // Clear expired or invalid session
+        localStorage.removeItem('igcse_teacher_session');
       }
 
       showAuthenticationUI();
@@ -510,7 +610,7 @@
 
       if (!response || !response.credential) {
         console.error('Invalid OAuth response:', response);
-        showStatus('Authentication failed: Invalid response from Google. Please try again.', 'error');
+        showStatus('Authentication failed: Invalid response from Google. Please try again.', 'error', 'assignStatusMessage');
         return;
       }
 
@@ -535,54 +635,24 @@
 
         localStorage.setItem('igcse_teacher_session', JSON.stringify(session));
 
-        // Initialize session with backend
         initializeBackendSession();
-
         showAuthenticatedUI();
         loadDashboardData();
         startSessionTimer();
 
-        showStatus('Successfully signed in! Loading dashboard...', 'success');
+        showStatus('Successfully signed in! Loading dashboard...', 'success', 'assignStatusMessage');
       } catch (error) {
         console.error('Authentication error:', error);
-        showStatus('Authentication failed: ' + error.message, 'error');
+        showStatus('Authentication failed: ' + error.message, 'error', 'assignStatusMessage');
       }
     }
 
     // Initialize session with backend
     async function initializeBackendSession() {
       try {
-        // For now, we'll create a simple session ID
         currentSessionId = 'teacher_session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
-        // Optionally load syllabus data for future use
-        await loadSyllabusData();
       } catch (error) {
         console.error('Session initialization error:', error);
-      }
-    }
-
-    // Load syllabus data from Flask backend
-    async function loadSyllabusData() {
-      try {
-        const syllabusUrl = `${API_CONFIG.BASE_URL}/syllabus`;
-        const response = await fetch(syllabusUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const syllabusData = await response.json();
-          console.log('Syllabus data loaded:', syllabusData);
-          // Store syllabus data for potential future use
-          window.syllabusData = syllabusData;
-        }
-      } catch (error) {
-        console.warn('Failed to load syllabus data:', error);
-        // Syllabus data is optional, so don't show error to user
       }
     }
 
@@ -612,7 +682,7 @@
       if (confirm('Are you sure you want to log out?')) {
         clearUserSession();
         showAuthenticationUI();
-        showStatus('Successfully logged out.', 'success');
+        showStatus('Successfully logged out.', 'success', 'assignStatusMessage');
       }
     }
 
@@ -633,7 +703,7 @@
       }
 
       sessionTimer = setTimeout(() => {
-        showStatus('Your session has expired. Please sign in again.', 'warning');
+        showStatus('Your session has expired. Please sign in again.', 'warning', 'assignStatusMessage');
         clearUserSession();
         showAuthenticationUI();
       }, API_CONFIG.SESSION_TIMEOUT);
@@ -642,12 +712,14 @@
     // Load dashboard data
     async function loadDashboardData() {
       try {
-        // Load all progress data from Flask backend
+        // Load all syllabuses first
+        await loadAllSyllabuses();
+
+        // Load all student progress data from Flask backend
         const progressUrl = `${API_CONFIG.BASE_URL}/all-progress`;
         const progressResponse = await fetch(progressUrl, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
@@ -658,65 +730,182 @@
 
         const progressResult = await progressResponse.json();
 
-        // Flask backend returns progress data in format: {status: 'success', data: [...]}
-        // Expected format: Array of student progress objects
-        // Each object should contain:
-        // - name: string (student name)
-        // - email: string (student email)
-        // - progress_percentage: number
-        // - completed_count: number
-        // - total_topics: number
-        // - last_updated: string (timestamp)
         if (progressResult && progressResult.status === 'success' && Array.isArray(progressResult.data)) {
-          // Transform Flask response format to match expected structure
-          allStudents = progressResult.data.map(studentProgress => {
-            return {
-              name: studentProgress.name || 'Unknown Student',
-              email: studentProgress.email,
-              progress: studentProgress.progress_percentage || 0,
-              lastSubmission: studentProgress.last_updated || null,
-              totalSubmissions: 1, // Each student has one progress entry
-              registration_date: studentProgress.last_updated || new Date().toISOString()
-            };
-          });
-
-          updateStatistics();
-          renderStudentCards();
-          renderProgressChart();
+          allStudentsProgress = progressResult.data;
+          filterAndRenderStudents();
+          // Now that we have student data, populate the student dropdown
+          populateStudentDropdown();
         } else {
-          throw new Error('Invalid data format received from server');
+          throw new Error('Invalid data format received from server for student progress');
         }
 
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-        handleBackendError(error);
+        handleBackendError(error, 'assignStatusMessage');
       }
     }
 
-    // Update statistics
+    async function loadAllSyllabuses() {
+      try {
+        const syllabusListUrl = `${API_CONFIG.BASE_URL}/all-syllabuses`;
+        const response = await fetch(syllabusListUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+
+        if (result.status === 'success' && Array.isArray(result.data)) {
+          allSyllabuses = result.data;
+          populateSyllabusSelectors();
+        } else {
+          throw new Error('Invalid data format for syllabuses');
+        }
+
+      } catch (error) {
+        console.error('Error loading all syllabuses:', error);
+        handleBackendError(error, 'assignStatusMessage');
+      }
+    }
+
+    function populateSyllabusSelectors() {
+      const assignSyllabusSelect = document.getElementById('assignSyllabusSelect');
+      const viewSyllabusSelect = document.getElementById('viewSyllabusSelect');
+
+      // Clear existing options, keep "All Syllabuses" in view selector
+      assignSyllabusSelect.innerHTML = '';
+      viewSyllabusSelect.innerHTML = '<option value="all">All Syllabuses</option>';
+
+      allSyllabuses.forEach(syllabus => {
+        if (syllabus.id !== 'contact') { // Don't allow assigning the contact syllabus explicitly
+          const assignOption = document.createElement('option');
+          assignOption.value = syllabus.id;
+          assignOption.textContent = syllabus.name + ' (' + syllabus.id + ')';
+          assignSyllabusSelect.appendChild(assignOption);
+        }
+
+        const viewOption = document.createElement('option');
+        viewOption.value = syllabus.id;
+        viewOption.textContent = syllabus.name + ' (' + syllabus.id + ')';
+        viewSyllabusSelect.appendChild(viewOption);
+      });
+    }
+
+    function populateStudentDropdown() {
+      const studentEmailSelect = document.getElementById('studentEmailSelect');
+
+      // Clear existing options
+      studentEmailSelect.innerHTML = '<option value="">Select a student</option>';
+
+      // Populate student dropdown with unique students (only if we have data)
+      if (allStudentsProgress && allStudentsProgress.length > 0) {
+        const uniqueStudents = [...new Set(allStudentsProgress.map(student => student.email))];
+        uniqueStudents.forEach(email => {
+          const student = allStudentsProgress.find(s => s.email === email);
+          if (student) {
+            const option = document.createElement('option');
+            option.value = email;
+            option.textContent = `${student.name} (${email})`;
+            studentEmailSelect.appendChild(option);
+          }
+        });
+      }
+    }
+
+    function filterStudentsBySyllabus() {
+      selectedViewSyllabusId = document.getElementById('viewSyllabusSelect').value;
+      const currentSyllabusNameSpan = document.getElementById('currentSyllabusName');
+      if (selectedViewSyllabusId === 'all') {
+        currentSyllabusNameSpan.textContent = 'All Syllabuses';
+      } else {
+        const selectedSyllabus = allSyllabuses.find(s => s.id === selectedViewSyllabusId);
+        currentSyllabusNameSpan.textContent = selectedSyllabus ? `${selectedSyllabus.name} (${selectedSyllabus.id})` : 'Unknown Syllabus';
+      }
+      filterAndRenderStudents();
+    }
+
+    // Filter students based on search input and progress filter
+    function filterAndRenderStudents() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const progressFilter = document.getElementById('progressFilter').value;
+
+      displayedStudents = allStudentsProgress.filter(student => {
+        const studentName = student.name.toLowerCase();
+        const studentEmail = student.email.toLowerCase();
+        const syllabusName = student.syllabus_name ? student.syllabus_name.toLowerCase() : '';
+
+        // Search filter
+        const matchesSearch = studentName.includes(searchTerm) ||
+          studentEmail.includes(searchTerm) ||
+          syllabusName.includes(searchTerm);
+
+        // Syllabus filter
+        const matchesSyllabus = selectedViewSyllabusId === 'all' || student.syllabus_name === allSyllabuses.find(s => s.id === selectedViewSyllabusId)?.name;
+
+        // Progress filter
+        let matchesProgress = true;
+        if (progressFilter !== 'all') {
+          const [min, max] = progressFilter.split('-').map(Number);
+          matchesProgress = (student.progress_percentage || 0) >= min && (student.progress_percentage || 0) <= max;
+        }
+
+        // Exclude 'contact' syllabus from general view unless specifically selected
+        if (selectedViewSyllabusId === 'all' && student.syllabus_name === 'Contact Syllabus') {
+          return false;
+        }
+        if (selectedViewSyllabusId === 'contact' && student.syllabus_name !== 'Contact Syllabus') {
+            return false; // Only show contact syllabus if selected
+        }
+
+        return matchesSearch && matchesSyllabus && matchesProgress;
+      });
+
+      updateStatistics();
+      renderStudentCards();
+      renderProgressChart();
+    }
+
+
+    // Update statistics based on displayed students
     function updateStatistics() {
-      const totalStudents = allStudents.length;
-      const studentsWithProgress = allStudents.filter(student => student.progress > 0);
+      const totalStudents = new Set(displayedStudents.map(s => s.email)).size; // Unique students
+      const studentsWithProgress = displayedStudents.filter(student => student.progress_percentage > 0);
       const averageProgress = studentsWithProgress.length > 0
-        ? Math.round(studentsWithProgress.reduce((sum, student) => sum + student.progress, 0) / studentsWithProgress.length)
+        ? Math.round(studentsWithProgress.reduce((sum, student) => sum + student.progress_percentage, 0) / studentsWithProgress.length)
         : 0;
-      const totalSubmissions = allStudents.reduce((sum, student) => sum + student.totalSubmissions, 0);
+      const syllabusesAssigned = new Set(displayedStudents.map(s => s.syllabus_name)).size; // Unique syllabuses displayed
       const completionRate = totalStudents > 0
         ? Math.round((studentsWithProgress.length / totalStudents) * 100)
         : 0;
 
       document.getElementById('totalStudents').textContent = totalStudents;
       document.getElementById('averageProgress').textContent = averageProgress + '%';
-      document.getElementById('totalSubmissions').textContent = totalSubmissions;
+      document.getElementById('syllabusesAssigned').textContent = syllabusesAssigned;
       document.getElementById('completionRate').textContent = completionRate + '%';
+
+      // Clear change indicators for simplicity or implement actual tracking if needed
+      document.getElementById('studentsChange').textContent = '';
+      document.getElementById('progressChange').textContent = '';
+      document.getElementById('assignmentsChange').textContent = '';
+      document.getElementById('completionChange').textContent = '';
     }
 
-    // Render student cards
+    // Render student cards based on displayed students
     function renderStudentCards() {
       const studentsGrid = document.getElementById('studentsGrid');
       studentsGrid.innerHTML = '';
 
-      allStudents.forEach(student => {
+      if (displayedStudents.length === 0) {
+        studentsGrid.innerHTML = '<p style="text-align: center; grid-column: 1 / -1;">No students found matching current filters.</p>';
+        return;
+      }
+
+      displayedStudents.forEach(student => {
         const card = document.createElement('div');
         card.className = 'student-card';
         card.innerHTML = `
@@ -724,34 +913,33 @@
                         <div>
                             <div class="student-name">${student.name}</div>
                             <div class="student-email">${student.email}</div>
+                            <div class="progress-label" style="margin-top: 5px;">Syllabus: ${student.syllabus_name || 'N/A'}</div>
                         </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: #2c3e50;">${Math.round(student.progress || 0)}%</div>
-                            <div style="font-size: 0.8rem; color: #6c757d;">Progress</div>
+                        <div class="progress-info">
+                            <div class="progress-percentage">${Math.round(student.progress_percentage || 0)}%</div>
+                            <div class="progress-label">Progress</div>
                         </div>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${student.progress || 0}%">${Math.round(student.progress || 0)}%</div>
+                        <div class="progress-fill" style="width: ${student.progress_percentage || 0}% ">${Math.round(student.progress_percentage || 0)}%</div>
                     </div>
                     <div class="student-stats">
-                        <span>Submissions: ${student.totalSubmissions || 0}</span>
-                        <span>Last: ${student.lastSubmission ? new Date(student.lastSubmission).toLocaleDateString() : 'Never'}</span>
+                        <span>Completed: ${student.completed_count || 0}/${student.total_topics || 0}</span>
+                        <span>Last Updated: ${student.last_updated ? new Date(student.last_updated).toLocaleDateString() : 'Never'}</span>
                     </div>
                 `;
         studentsGrid.appendChild(card);
       });
     }
 
-    // Render progress chart
+    // Render progress chart based on displayed students
     function renderProgressChart() {
       const ctx = document.getElementById('progressChart').getContext('2d');
 
-      // Destroy existing chart if it exists
       if (progressChart) {
         progressChart.destroy();
       }
 
-      // Group students by progress ranges
       const progressRanges = {
         '0-25': 0,
         '25-50': 0,
@@ -759,8 +947,8 @@
         '75-100': 0
       };
 
-      allStudents.forEach(student => {
-        const progress = student.progress || 0;
+      displayedStudents.forEach(student => {
+        const progress = student.progress_percentage || 0;
         if (progress <= 25) progressRanges['0-25']++;
         else if (progress <= 50) progressRanges['25-50']++;
         else if (progress <= 75) progressRanges['50-75']++;
@@ -820,89 +1008,87 @@
       });
     }
 
-    // Filter students
+    // Filter students (combined search and progress filter)
     function filterStudents() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const progressFilter = document.getElementById('progressFilter').value;
+      filterAndRenderStudents();
+    }
 
-      const filteredStudents = allStudents.filter(student => {
-        // Search filter
-        const matchesSearch = student.name.toLowerCase().includes(searchTerm) ||
-          student.email.toLowerCase().includes(searchTerm);
+    // Assign syllabus to a student
+    async function assignSyllabus(event) {
+      event.preventDefault();
+      const studentEmail = document.getElementById('studentEmailSelect').value;
+      const syllabusId = document.getElementById('assignSyllabusSelect').value;
 
-        // Progress filter
-        let matchesProgress = true;
-        if (progressFilter !== 'all') {
-          const [min, max] = progressFilter.split('-').map(Number);
-          matchesProgress = student.progress >= min && student.progress <= max;
+      if (!studentEmail || !syllabusId) {
+        showStatus('Please enter student email and select a syllabus.', 'error', 'assignStatusMessage');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/assign-syllabus`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            student_email: studentEmail,
+            syllabus_id: syllabusId
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showStatus(result.message, 'success', 'assignStatusMessage');
+          // Reset the form
+          document.getElementById('studentEmailSelect').value = '';
+          document.getElementById('assignSyllabusSelect').selectedIndex = 0;
+          loadDashboardData(); // Refresh data
+        } else {
+          throw new Error(result.error || 'Assignment failed');
         }
 
-        return matchesSearch && matchesProgress;
-      });
-
-      // Update display
-      const studentsGrid = document.getElementById('studentsGrid');
-      studentsGrid.innerHTML = '';
-
-      filteredStudents.forEach(student => {
-        const card = document.createElement('div');
-        card.className = 'student-card';
-        card.innerHTML = `
-                    <div class="student-header">
-                        <div>
-                            <div class="student-name">${student.name}</div>
-                            <div class="student-email">${student.email}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: #2c3e50;">${student.progress || 0}%</div>
-                            <div style="font-size: 0.8rem; color: #6c757d;">Progress</div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${student.progress || 0}%">${student.progress || 0}%</div>
-                    </div>
-                    <div class="student-stats">
-                        <span>Submissions: ${student.totalSubmissions || 0}</span>
-                        <span>Last: ${student.lastSubmission ? new Date(student.lastSubmission).toLocaleDateString() : 'Never'}</span>
-                    </div>
-                `;
-        studentsGrid.appendChild(card);
-      });
+      } catch (error) {
+        console.error('Syllabus assignment error:', error);
+        showStatus('Failed to assign syllabus: ' + error.message, 'error', 'assignStatusMessage');
+      }
     }
 
     // Export data
     function exportData() {
       try {
         const csvContent = generateCSV();
-        const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
 
         link.setAttribute('href', url);
-        link.setAttribute('download', `igcse_progress_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `teacher_dashboard_progress_${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
 
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        showStatus('Data exported successfully!', 'success');
+        showStatus('Data exported successfully!', 'success', 'assignStatusMessage');
       } catch (error) {
         console.error('Export error:', error);
-        showStatus('Failed to export data.', 'error');
+        showStatus('Failed to export data.', 'error', 'assignStatusMessage');
       }
     }
 
-    // Generate CSV content
+    // Generate CSV content from currently displayed students
     function generateCSV() {
-      const headers = ['Name', 'Email', 'Progress %', 'Total Submissions', 'Last Submission', 'Registration Date'];
-      const rows = allStudents.map(student => [
+      const headers = ['Student Name', 'Student Email', 'Syllabus', 'Progress %', 'Completed Topics', 'Total Topics', 'Last Updated'];
+      const rows = displayedStudents.map(student => [
         student.name,
         student.email,
-        student.progress || 0,
-        student.totalSubmissions || 0,
-        student.lastSubmission ? new Date(student.lastSubmission).toLocaleDateString() : 'Never',
-        student.registration_date ? new Date(student.registration_date).toLocaleDateString() : 'Unknown'
+        student.syllabus_name || 'N/A',
+        Math.round(student.progress_percentage || 0),
+        student.completed_count || 0,
+        student.total_topics || 0,
+        student.last_updated ? new Date(student.last_updated).toLocaleString() : 'Never'
       ]);
 
       return [headers, ...rows]
@@ -911,12 +1097,11 @@
     }
 
     // Show status message
-    function showStatus(message, type) {
-      // Create status element if it doesn't exist
-      let statusElement = document.getElementById('statusMessage');
+    function showStatus(message, type, targetElementId = 'assignStatusMessage') {
+      let statusElement = document.getElementById(targetElementId);
       if (!statusElement) {
         statusElement = document.createElement('div');
-        statusElement.id = 'statusMessage';
+        statusElement.id = targetElementId;
         statusElement.className = 'status-message';
         document.querySelector('.dashboard-content').prepend(statusElement);
       }
@@ -925,7 +1110,6 @@
       statusElement.className = 'status-message';
       statusElement.classList.add('status-' + type);
 
-      // Auto-hide success messages after 5 seconds
       if (type === 'success') {
         setTimeout(() => {
           statusElement.textContent = '';
@@ -935,12 +1119,12 @@
     }
 
     // Handle backend connection errors
-    function handleBackendError(error) {
+    function handleBackendError(error, targetElementId = 'assignStatusMessage') {
       console.error('Backend connection error:', error);
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        showStatus('Cannot connect to backend server. Please ensure the Flask server is running.', 'error');
+        showStatus('Cannot connect to backend server. Please ensure the Flask server is running.', 'error', targetElementId);
       } else {
-        showStatus('Backend error: ' + error.message, 'error');
+        showStatus('Backend error: ' + error.message, 'error', targetElementId);
       }
     }
 

@@ -40,8 +40,8 @@ def home():
     return jsonify(
         {
             "status": "success",
-            "message": "IGCSE Math Progress Tracker API",
-            "version": "1.0",
+            "message": "IGCSE Multi-Syllabus Progress Tracker API",
+            "version": "2.0",
         }
     )
 
@@ -57,14 +57,20 @@ def serve_teacher_dashboard():
     return send_from_directory(".", "teacher_dashboard.html")
 
 
+# ========== STUDENT API ENDPOINTS ==========
+
+
 @app.route(f"{BASE_URL}/update-topic", methods=["GET", "POST"])
 def update_topic():
-    """Update individual topic progress"""
+    """Update individual topic progress for a specific syllabus"""
     try:
         # Handle both GET and POST requests
         if request.method == "GET":
             student_email = request.args.get("student_email")
             student_name = request.args.get("student_name")
+            syllabus_id = request.args.get(
+                "syllabus_id", "0580"
+            )  # Default to 0580 for backward compatibility
             topic_id = request.args.get("topic_id")
             is_completed = (
                 request.args.get("is_completed", "").lower() == "true"
@@ -79,6 +85,9 @@ def update_topic():
 
             student_email = data.get("student_email")
             student_name = data.get("student_name")
+            syllabus_id = data.get(
+                "syllabus_id", "0580"
+            )  # Default to 0580 for backward compatibility
             topic_id = data.get("topic_id")
             is_completed = data.get("is_completed", False)
 
@@ -111,13 +120,14 @@ def update_topic():
 
         # Update topic progress
         progress_data = db.update_topic_progress(
-            student_email, topic_id, is_completed
+            student_email, syllabus_id, topic_id, is_completed
         )
 
         return jsonify(
             {
                 "success": True,
                 "message": "Topic progress updated successfully",
+                "syllabus_id": syllabus_id,
                 "topics": [{"id": topic_id, "completed": is_completed}],
                 "overall_progress": {
                     "percentage": progress_data.get("progress_percentage"),
@@ -138,7 +148,89 @@ def update_topic():
 
 @app.route(f"{BASE_URL}/student-progress", methods=["GET", "POST"])
 def get_student_progress():
-    """Get individual student progress with syllabus data"""
+    """Get individual student progress for a specific syllabus"""
+    try:
+        # Handle both GET and POST requests
+        if request.method == "GET":
+            student_email = request.args.get("student_email")
+            syllabus_id = request.args.get(
+                "syllabus_id", "0580"
+            )  # Default to 0580 for backward compatibility
+        else:  # POST
+            data = request.get_json()
+            if not data:
+                return (
+                    jsonify({"success": False, "error": "Invalid JSON data"}),
+                    400,
+                )
+            student_email = data.get("studentEmail")
+            syllabus_id = data.get(
+                "syllabus_id", "0580"
+            )  # Default to 0580 for backward compatibility
+
+        if not student_email:
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Missing required parameter: studentEmail",
+                    }
+                ),
+                400,
+            )
+
+        # Rate limiting
+        if not rate_limit_check(student_email):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Rate limit exceeded. Please try again later.",
+                    }
+                ),
+                429,
+            )
+
+        progress_data = db.get_student_progress(student_email, syllabus_id)
+
+        if progress_data:
+            return jsonify(
+                {
+                    "success": True,
+                    "syllabus_id": syllabus_id,
+                    "progress": {
+                        "overall_progress": {
+                            "percentage": progress_data["progress_percentage"],
+                            "completed": progress_data["completed_count"],
+                            "total": progress_data["total_topics"],
+                        },
+                        "topics": progress_data["syllabus"],
+                    },
+                }
+            )
+        else:
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Student not found or no progress data",
+                    }
+                ),
+                404,
+            )
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"success": False, "error": f"Internal server error: {str(e)}"}
+            ),
+            500,
+        )
+
+
+@app.route(f"{BASE_URL}/student-syllabuses", methods=["GET", "POST"])
+def get_student_syllabuses():
+    """Get all syllabuses assigned to a student"""
     try:
         # Handle both GET and POST requests
         if request.method == "GET":
@@ -175,27 +267,9 @@ def get_student_progress():
                 429,
             )
 
-        progress_data = db.get_student_progress(student_email)
+        syllabuses = db.get_student_syllabuses(student_email)
 
-        if progress_data:
-            return jsonify(
-                {
-                    "success": True,
-                    "progress": {
-                        "overall_progress": {
-                            "percentage": progress_data["progress_percentage"],
-                            "completed": progress_data["completed_count"],
-                            "total": progress_data["total_topics"],
-                        },
-                        "topics": progress_data["syllabus"],
-                    },
-                }
-            )
-        else:
-            return (
-                jsonify({"status": "error", "message": "Student not found"}),
-                404,
-            )
+        return jsonify({"success": True, "syllabuses": syllabuses})
 
     except Exception as e:
         return (
@@ -206,9 +280,12 @@ def get_student_progress():
         )
 
 
+# ========== TEACHER API ENDPOINTS ==========
+
+
 @app.route(f"{BASE_URL}/all-progress", methods=["GET"])
 def get_all_progress():
-    """Get progress data for all students (teacher dashboard)"""
+    """Get progress data for all students across all syllabuses (teacher dashboard)"""
     try:
         # Rate limiting for teacher dashboard
         if not rate_limit_check("teacher_dashboard"):
@@ -264,36 +341,25 @@ def get_student_list():
         )
 
 
-@app.route(f"{BASE_URL}/syllabus", methods=["GET"])
-def get_syllabus():
-    """Get syllabus data"""
+@app.route(f"{BASE_URL}/all-syllabuses", methods=["GET"])
+def get_all_syllabuses():
+    """Get all available syllabuses"""
     try:
-        syllabus = db.get_syllabus()
-
-        # Transform flat syllabus into nested structure for frontend
-        chapters = {}
-        for topic in syllabus:
-            chapter_name = topic["chapter"]
-            if chapter_name not in chapters:
-                chapters[chapter_name] = {
-                    "number": len(chapters) + 1,
-                    "name": chapter_name,
-                    "topics": [],
-                }
-
-            chapters[chapter_name]["topics"].append(
-                {
-                    "id": topic["id"],
-                    "number": len(chapters[chapter_name]["topics"]) + 1,
-                    "name": topic["subchapter"],
-                    "weight": topic["weight"],
-                }
+        # Rate limiting
+        if not rate_limit_check("syllabus_list"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Rate limit exceeded. Please try again later.",
+                    }
+                ),
+                429,
             )
 
-        # Convert to list for frontend
-        syllabus_data = list(chapters.values())
+        syllabuses = db.get_all_syllabuses()
 
-        return jsonify({"status": "success", "data": syllabus_data})
+        return jsonify({"status": "success", "data": syllabuses})
 
     except Exception as e:
         return (
@@ -304,79 +370,156 @@ def get_syllabus():
         )
 
 
-# @app.route(f"{BASE_URL}/submit-progress", methods=["GET", "POST"])
-# def submit_progress():
-#     """Submit overall progress (for compatibility with existing frontend)"""
-# try:
-#     if request.method == "GET":
-#         student_email = request.args.get("studentEmail")
-#         student_name = request.args.get("studentName")
-#         progress_percentage = float(
-#             request.args.get("progressPercentage", 0)
-#         )
-#         completed_count = int(request.args.get("completedCount", 0))
-#         total_topics = int(request.args.get("totalTopics", 0))
-#     else:  # POST
-#         data = request.get_json()
-#         if not data:
-#             return (
-#                 jsonify({"success": False, "error": "Invalid JSON data"}),
-#                 400,
-#             )
-#
-#         student_email = data.get("studentEmail")
-#         student_name = data.get("studentName")
-#         progress_percentage = float(data.get("progressPercentage", 0))
-#         completed_count = int(data.get("completedCount", 0))
-#         total_topics = int(data.get("totalTopics", 0))
-#
-#     if not all([student_email, student_name]):
-#         return (
-#             jsonify(
-#                 {
-#                     "status": "error",
-#                     "message": "Missing required parameters: studentEmail, studentName",
-#                 }
-#             ),
-#             400,
-#         )
-#     if not rate_limit_check(student_email):
-#         return (
-#             jsonify(
-#                 {
-#                     "success": False,
-#                     "error": "Rate limit exceeded. Please try again later.",
-#                 }
-#             ),
-#             429,
-#         )
-#     db.register_student(student_email, student_name)
-#
-#     return jsonify(
-#         {
-#             "status": "success",
-#             "message": "Progress submitted successfully",
-#             "data": {
-#                 # "progress_percentage": progress_percentage,
-#                 # "completed_count": completed_count,
-#                 # "total_topics": total_topics,
-#                 "overall_progress": {
-#                     "percentage": progress_percentage,
-#                     "completed": completed_count,
-#                     "total": total_topics,
-#                 },
-#                 "topics": progress_data["syllabus"],
-#             },
-#         }
-#     )
-#
-# except Exception as e:
-#     return (
-#         jsonify(
-#             {"success": False, "error": f"Internal server error: {str(e)}"}
-#         ),
-#         500,
-#     )
+@app.route(f"{BASE_URL}/syllabus/<syllabus_id>", methods=["GET"])
+def get_syllabus_structure(syllabus_id):
+    """Get syllabus structure with variants and topics"""
+    try:
+        # Rate limiting
+        if not rate_limit_check(f"syllabus_{syllabus_id}"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Rate limit exceeded. Please try again later.",
+                    }
+                ),
+                429,
+            )
+
+        syllabus_data = db.get_syllabus_structure(syllabus_id)
+
+        if syllabus_data:
+            return jsonify({"status": "success", "data": syllabus_data})
+        else:
+            return (
+                jsonify({"status": "error", "message": "Syllabus not found"}),
+                404,
+            )
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"success": False, "error": f"Internal server error: {str(e)}"}
+            ),
+            500,
+        )
+
+
+@app.route(f"{BASE_URL}/assign-syllabus", methods=["POST"])
+def assign_syllabus():
+    """Assign a syllabus to a student"""
+    try:
+        data = request.get_json()
+        if not data:
+            return (
+                jsonify({"success": False, "error": "Invalid JSON data"}),
+                400,
+            )
+
+        student_email = data.get("student_email")
+        syllabus_id = data.get("syllabus_id")
+
+        if not all([student_email, syllabus_id]):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Missing required parameters: student_email, syllabus_id",
+                    }
+                ),
+                400,
+            )
+
+        # Rate limiting
+        if not rate_limit_check("teacher_dashboard"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Rate limit exceeded. Please try again later.",
+                    }
+                ),
+                429,
+            )
+
+        db.assign_student_to_syllabus(student_email, syllabus_id)
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Student {student_email} assigned to syllabus {syllabus_id}",
+            }
+        )
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"success": False, "error": f"Internal server error: {str(e)}"}
+            ),
+            500,
+        )
+
+
+# ========== BACKWARD COMPATIBILITY ENDPOINTS ==========
+
+
+@app.route(f"{BASE_URL}/syllabus", methods=["GET"])
+def get_syllabus():
+    """Get syllabus data (backward compatibility - defaults to 0580)"""
+    try:
+        syllabus_data = db.get_syllabus_structure("0580")
+
+        if syllabus_data:
+            # Transform to old format for backward compatibility
+            topics = []
+            for variant in syllabus_data.get("variants", []):
+                for topic in variant.get("topics", []):
+                    topics.append(
+                        {
+                            "id": topic["id"],
+                            "chapter": topic["chapter_name"],
+                            "subchapter": topic["topic_name"],
+                            "weight": topic.get("weight", 1),
+                        }
+                    )
+
+            # Transform flat syllabus into nested structure for frontend
+            chapters = {}
+            for topic in topics:
+                chapter_name = topic["chapter"]
+                if chapter_name not in chapters:
+                    chapters[chapter_name] = {
+                        "number": len(chapters) + 1,
+                        "name": chapter_name,
+                        "topics": [],
+                    }
+
+                chapters[chapter_name]["topics"].append(
+                    {
+                        "id": topic["id"],
+                        "number": len(chapters[chapter_name]["topics"]) + 1,
+                        "name": topic["subchapter"],
+                        "weight": topic["weight"],
+                    }
+                )
+
+            # Convert to list for frontend
+            syllabus_data = list(chapters.values())
+
+            return jsonify({"status": "success", "data": syllabus_data})
+        else:
+            return (
+                jsonify({"status": "error", "message": "Syllabus not found"}),
+                404,
+            )
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"success": False, "error": f"Internal server error: {str(e)}"}
+            ),
+            500,
+        )
 
 
 @app.route(f"{BASE_URL}/initialize", methods=["GET"])
@@ -414,3 +557,4 @@ if __name__ == "__main__":
 
     # Run the application
     app.run(host="0.0.0.0", port=port, debug=True)
+

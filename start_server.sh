@@ -98,7 +98,7 @@ done
 echo "================================================================================="
 
 
-print_status "Starting Flask server on VPS..."
+print_status "Started Flask server on VPS successfully..."
 # Use a very simple approach to start the server
 source venv/bin/activate &&
 python app.py > flask.log 2>&1  &

@@ -101,6 +101,7 @@ copy_files_to_vps() {
         --exclude='venv/' \
         --exclude='.git/' \
         --exclude='.claude/' \
+        --exclude='igcse_progress.db' \
         --exclude='google_oauth_setup_guide.md' \
         --exclude='unified_setup_guide.md' \
         --exclude='unified_api_specification.md' \

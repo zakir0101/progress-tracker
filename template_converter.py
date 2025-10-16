@@ -66,7 +66,7 @@ def do_somethinkg_with_courses(reset: bool):
 
 
 syllabus_path = os.path.join(
-    ".","syllabus-old"
+    ".","syllabuses"
 )
 
 all_courses = [
@@ -346,3 +346,123 @@ def load_subjects_files():
     for sub in all_courses:
         sub_dict[sub] = Course(sub)
     return sub_dict
+
+
+def generate_syllabus_database_data():
+    """
+    Generate syllabus data in format suitable for database insertion
+    Returns: dict with syllabus structure where each variant is treated as independent syllabus
+    """
+    sub_dict = load_subjects_files()
+    syllabus_data = {}
+
+    for course_id, course in sub_dict.items():
+        for variant_name, variant in course.variants.items():
+            # Treat each variant as an independent syllabus
+            variant_id = f"{course_id}_{variant_name.lower()}"
+            syllabus_data[variant_id] = {
+                "id": variant_id,
+                "name": f"{course.name} - {variant_name}",
+                "description": variant.description,
+                "variants": {
+                    f"{variant_id}_main": {
+                        "id": f"{variant_id}_main",
+                        "name": "Main",
+                        "description": variant.description,
+                        "topics": []
+                    }
+                }
+            }
+
+            # Extract topics from chapters
+            topic_counter = 1
+            for chapter in variant.chapters:
+                chapter_name = chapter.name
+
+                if hasattr(chapter, 'topics') and chapter.topics:
+                    # Course has topics within chapters
+                    for topic_name, topic in chapter.topics.items():
+                        topic_id = f"{variant_id}_{chapter.number}_{topic.number}"
+                        syllabus_data[variant_id]["variants"][f"{variant_id}_main"]["topics"].append({
+                            "id": topic_id,
+                            "chapter_name": chapter_name,
+                            "topic_name": topic_name,
+                            "topic_number": topic.number,
+                            "description": topic.description,
+                            "weight": 1  # Default weight, can be adjusted
+                        })
+                        topic_counter += 1
+                else:
+                    # Course has chapters as topics (like 0606)
+                    topic_id = f"{variant_id}_{chapter.number}_1"
+                    syllabus_data[variant_id]["variants"][f"{variant_id}_main"]["topics"].append({
+                        "id": topic_id,
+                        "chapter_name": chapter_name,
+                        "topic_name": chapter_name,  # Use chapter name as topic name
+                        "topic_number": 1,
+                        "description": chapter.description or "",
+                        "weight": 1
+                    })
+                    topic_counter += 1
+
+    return syllabus_data
+
+
+def create_contact_syllabus():
+    """
+    Create the special contact syllabus for initial student enrollment
+    """
+    return {
+        "id": "contact",
+        "name": "Contact Syllabus",
+        "description": "Initial syllabus for new students to contact administrator and enroll in courses",
+        "variants": {
+            "contact_main": {
+                "id": "contact_main",
+                "name": "Main",
+                "description": "Contact and enrollment topics",
+                "topics": [
+                    {
+                        "id": "contact_main_1_1",
+                        "chapter_name": "Administration",
+                        "topic_name": "Contact Administrator",
+                        "topic_number": 1,
+                        "description": "Please contact the administrator to get enrolled in your desired courses.",
+                        "weight": 1
+                    },
+                    {
+                        "id": "contact_main_1_2",
+                        "chapter_name": "Enrollment",
+                        "topic_name": "Enroll in Course",
+                        "topic_number": 2,
+                        "description": "Once you contact the administrator, you will be enrolled in the appropriate courses.",
+                        "weight": 1
+                    }
+                ]
+            }
+        }
+    }
+
+
+def get_all_syllabus_data():
+    """
+    Get all syllabus data including the contact syllabus
+    """
+    all_data = generate_syllabus_database_data()
+    all_data["contact"] = create_contact_syllabus()
+    return all_data
+
+
+if __name__ == "__main__":
+    # Test the syllabus parsing
+    data = get_all_syllabus_data()
+    print("Available syllabuses:", list(data.keys()))
+
+    for syllabus_id, syllabus in data.items():
+        print(f"\nSyllabus: {syllabus['name']} ({syllabus_id})")
+        for variant_id, variant in syllabus['variants'].items():
+            print(f"  Variant: {variant['name']} ({variant_id})")
+            print(f"    Topics: {len(variant['topics'])}")
+            # Show first few topics
+            for topic in variant['topics'][:3]:
+                print(f"      - {topic['topic_name']}")

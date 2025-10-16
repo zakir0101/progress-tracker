@@ -1,9 +1,10 @@
-# Unified IGCSE Math Progress Tracker - Complete Setup Guide
+# Unified IGCSE Multi-Syllabus Progress Tracker - Complete Setup Guide
 
 ## Overview
-This system provides a complete solution for tracking IGCSE Mathematics student progress with:
-- **Student Interface**: Individual progress tracking with Google OAuth authentication
-- **Teacher Dashboard**: Comprehensive monitoring of all student progress with Google OAuth
+This system provides a complete solution for tracking IGCSE student progress across multiple syllabuses with:
+- **Multi-Syllabus Support**: Track progress across 7+ IGCSE subjects (Mathematics, Physics, etc.)
+- **Student Interface**: Individual progress tracking with syllabus selection and Google OAuth authentication
+- **Teacher Dashboard**: Comprehensive monitoring of all student progress with syllabus assignment capabilities
 - **Unified Backend**: Flask Python API with SQLite database
 - **Data Storage**: Local SQLite database with automatic backups
 - **User Identification**: Secure Google OAuth for student and teacher identification
@@ -11,13 +12,21 @@ This system provides a complete solution for tracking IGCSE Mathematics student 
 ## File Structure
 ```
 /home/zakir/tmp/
-├── student_tracker.html          # Student interface with authentication
-├── teacher_dashboard.html        # Teacher dashboard with analytics
-├── app.py                        # Flask backend API
-├── database.py                   # SQLite database management
+├── student_tracker.html          # Student interface with multi-syllabus support
+├── teacher_dashboard.html        # Teacher dashboard with syllabus assignment
+├── app.py                        # Flask backend API with multi-syllabus endpoints
+├── database.py                   # SQLite database with multi-syllabus schema
+├── template_converter.py         # Syllabus parser for multiple subjects
+├── syllabuses/                   # Directory containing syllabus JSON files
+│   ├── 0580.json                 # Mathematics 0580 syllabus
+│   ├── 0606.json                 # Additional Mathematics 0606 syllabus
+│   ├── 0625.json                 # Physics 0625 syllabus
+│   └── ...                       # Other syllabuses
 ├── requirements.txt              # Python dependencies
-├── unified_api_specification.md  # API documentation
-└── unified_setup_guide.md        # This setup guide
+├── docs/
+│   ├── unified_setup_guide.md    # This setup guide
+│   └── google_oauth_setup_guide.md # OAuth configuration
+└── database_schema_design.md     # Multi-syllabus database schema
 ```
 
 ## Step 1: Set Up Flask Backend
@@ -143,19 +152,40 @@ Teachers can manually register students via the dashboard.
 3. Confirm data integrity and formatting
 4. Check for automatic backups in `backups/` directory
 
+## Multi-Syllabus Features
+
+### Available Syllabuses
+- **Mathematics 0580** - IGCSE Mathematics
+- **Additional Mathematics 0606** - IGCSE Additional Mathematics
+- **Further Mathematics 9231** - AS/A Level Further Mathematics
+- **Mathematics 9709** - AS/A Level Mathematics
+- **Physics 0625** - IGCSE Physics
+- **Physics 9702** - AS/A Level Physics
+- **Contact Syllabus** - Special syllabus for new students
+
+### Student Onboarding Flow
+1. **Initial Sign-up**: Student automatically assigned to "Contact Syllabus"
+2. **Contact Syllabus**: Contains "Contact Administrator" and "Enroll in Course" topics
+3. **Syllabus Assignment**: Teacher assigns actual syllabuses to student
+4. **Progress Tracking**: Student tracks progress across assigned syllabuses
+
 ## API Endpoints Reference
 
 ### Student Endpoints
-- `POST /submit-progress` - Submit student progress
-- `GET /student-progress` - Get individual student progress
+- `POST /update-topic` - Update individual topic progress for a specific syllabus
+- `GET /student-progress` - Get individual student progress for a specific syllabus
+- `GET /student-syllabuses` - Get all syllabuses assigned to a student
 
 ### Teacher Endpoints
-- `GET /all-progress` - Get all student progress data
+- `GET /all-progress` - Get progress data for all students across all syllabuses
 - `GET /student-list` - Get list of all students
-- `POST /register-student` - Register new student
+- `GET /all-syllabuses` - Get all available syllabuses
+- `GET /syllabus/<syllabus_id>` - Get syllabus structure with variants and topics
+- `POST /assign-syllabus` - Assign a syllabus to a student
 
 ### System Endpoints
 - `GET /initialize` - Initialize database
+- `GET /syllabus` - Backward compatibility endpoint (defaults to 0580)
 
 ## Security Features
 
@@ -232,14 +262,18 @@ For technical support:
 
 ## Benefits
 
+✅ **Multi-Syllabus Support** - Track progress across 7+ IGCSE subjects
+✅ **Flexible Syllabus Management** - Teachers can assign different syllabuses to different students
+✅ **Student Onboarding** - Contact syllabus for new students with automatic assignment
 ✅ **Complete Solution** - Student and teacher interfaces
 ✅ **Secure Authentication** - Google OAuth integration
-✅ **Real-time Analytics** - Teacher dashboard with charts
-✅ **Data Export** - CSV export functionality
+✅ **Real-time Analytics** - Teacher dashboard with charts and syllabus filtering
+✅ **Data Export** - CSV export functionality with syllabus information
 ✅ **Mobile Responsive** - Works on all devices
 ✅ **Free Solution** - Uses Google's free services
 ✅ **No Email Spam** - Unlike FormSubmit
 ✅ **Incremental Submissions** - Students can update progress anytime
+✅ **Weight-based Progress** - Accurate progress calculation with topic weighting
 
 ## Next Steps
 
