@@ -35,7 +35,10 @@ function AnalyticsView() {
       '75-100': 0
     }
 
-    displayedStudents.forEach(student => {
+    // Use allStudentsProgress if displayedStudents is empty
+    const studentsToUse = displayedStudents.length > 0 ? displayedStudents : allStudentsProgress.filter(s => s.syllabus_name !== 'contact')
+
+    studentsToUse.forEach(student => {
       const progress = student.progress_percentage || 0
       if (progress <= 25) progressRanges['0-25']++
       else if (progress <= 50) progressRanges['25-50']++
@@ -70,7 +73,7 @@ function AnalyticsView() {
         },
       ],
     }
-  }, [displayedStudents])
+  }, [displayedStudents, allStudentsProgress])
 
   // Syllabus distribution chart data
   const syllabusChartData = React.useMemo(() => {
@@ -297,7 +300,7 @@ function AnalyticsView() {
                 .map((student, index) => (
                   <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
                     <span className="text-sm text-gray-700">{student.name}</span>
-                    <span className="text-sm font-semibold text-green-600">{student.progress_percentage}%</span>
+                    <span className="text-sm font-semibold text-green-600">{Math.round(student.progress_percentage)}%</span>
                   </div>
                 ))
               }
@@ -316,7 +319,7 @@ function AnalyticsView() {
                 .map((student, index) => (
                   <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
                     <span className="text-sm text-gray-700">{student.name}</span>
-                    <span className="text-sm font-semibold text-red-600">{student.progress_percentage}%</span>
+                    <span className="text-sm font-semibold text-red-600">{Math.round(student.progress_percentage)}%</span>
                   </div>
                 ))
               }

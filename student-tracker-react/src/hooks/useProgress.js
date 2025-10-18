@@ -55,6 +55,31 @@ export function useProgress() {
   }, [])
 
   const updateTopicProgress = useCallback(async (requestData) => {
+    const { topic_id, is_completed } = requestData
+
+    // Optimistic update: immediately update UI
+    setProgressData(prevData => {
+      const updatedTopics = {
+        ...prevData.topics,
+        [topic_id]: is_completed
+      }
+
+      // Calculate optimistic overall progress
+      const completedTopics = Object.values(updatedTopics).filter(Boolean).length
+      const totalTopics = Object.keys(updatedTopics).length
+      const optimisticPercentage = totalTopics > 0 ? (completedTopics / totalTopics * 100) : 0
+
+      return {
+        ...prevData,
+        topics: updatedTopics,
+        overall_progress: {
+          percentage: optimisticPercentage,
+          completed: completedTopics,
+          total: totalTopics
+        }
+      }
+    })
+
     setLoading(true)
 
     try {
@@ -74,7 +99,7 @@ export function useProgress() {
       const result = await response.json()
 
       if (result.success) {
-        // Update UI with data from backend
+        // Update UI with confirmed data from backend
         updateProgressFromBackend({
           topics: result.topics,
           overall_progress: result.overall_progress
@@ -85,6 +110,30 @@ export function useProgress() {
     } catch (err) {
       console.error('Topic update error:', err)
       setError('Failed to update progress. Please try again.')
+
+      // Revert optimistic update on error
+      setProgressData(prevData => {
+        const revertedTopics = {
+          ...prevData.topics,
+          [topic_id]: !is_completed // Revert to previous state
+        }
+
+        // Recalculate overall progress
+        const completedTopics = Object.values(revertedTopics).filter(Boolean).length
+        const totalTopics = Object.keys(revertedTopics).length
+        const revertedPercentage = totalTopics > 0 ? (completedTopics / totalTopics * 100) : 0
+
+        return {
+          ...prevData,
+          topics: revertedTopics,
+          overall_progress: {
+            percentage: revertedPercentage,
+            completed: completedTopics,
+            total: totalTopics
+          }
+        }
+      })
+
       throw err
     } finally {
       setLoading(false)
@@ -94,20 +143,23 @@ export function useProgress() {
   const updateProgressFromBackend = useCallback((progressData) => {
     if (!progressData) return
 
-    // Convert topics array to object for easier lookup
-    const topicsObj = {}
-    if (progressData.topics) {
-      progressData.topics.forEach(topic => {
-        topicsObj[topic.id] = topic.completed
-      })
-    }
+    setProgressData(prevData => {
+      // Convert topics array to object for easier lookup
+      const topicsObj = {...prevData.topics}
+      if (progressData.topics) {
+        progressData.topics.forEach(topic => {
+          topicsObj[topic.id] = topic.completed
+        })
+      }
 
-    setProgressData({
-      topics: topicsObj,
-      overall_progress: progressData.overall_progress || {
-        percentage: 0,
-        completed: 0,
-        total: 0
+      return {
+        ...prevData,
+        topics: topicsObj,
+        overall_progress: progressData.overall_progress || {
+          percentage: 0,
+          completed: 0,
+          total: 0
+        }
       }
     })
   }, [])

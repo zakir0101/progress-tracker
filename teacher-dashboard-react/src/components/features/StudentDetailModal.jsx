@@ -311,7 +311,7 @@ function StudentDetailModal({ student, isOpen, onClose }) {
                     <div>
                       <p className="font-medium text-gray-800">{syllabus.syllabus_name || 'Unknown Syllabus'}</p>
                       <p className="text-sm text-gray-600">
-                        Progress: {syllabus.progress_percentage || 0}% •
+                        Progress: {Math.round(syllabus.progress_percentage || 0)}% •
                         {syllabus.completed_count || 0}/{syllabus.total_topics || 0} topics
                       </p>
                     </div>

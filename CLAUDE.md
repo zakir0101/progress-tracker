@@ -61,18 +61,6 @@ This is an IGCSE Multi-Syllabus Progress Tracker - a Flask web application with 
 
 ## Development Commands
 
-### React Development
-```bash
-# Student Tracker Development
-cd student-tracker-react
-npm run dev  # Starts development server on http://localhost:3000
-
-# Teacher Dashboard Development
-cd teacher-dashboard-react
-npm run dev  # Starts development server on http://localhost:3000
-
-# Build React applications
-npm run build  # Outputs to ../public/student/ and ../public/teacher/
 ```
 
 ### Deployment
@@ -91,17 +79,21 @@ npm run build  # Outputs to ../public/student/ and ../public/teacher/
 ### Database Management
 ```bash
 # Initialize database (triggers syllabus parsing and setup)
-curl http://localhost:5000/initialize
+curl http://mamounelkheir.com/tracker/initialize
 ```
 
 ### Testing
+- test the app mainly using playwright MCP 
+
+- sometimes you could use on of these endpoint to help you with testing 
 ```bash
 # Test API endpoints
-curl http://mamounelkheir/tracker/test
-curl http://mamounelkheir/tracker/all-syllabuses
-curl http://mamounelkheir/syllabus/0580_core
+curl http://mamounelkheir.com/tracker/test
+curl http://mamounelkheir.com/tracker/all-syllabuses
+curl http://mamounelkheir.com/tracker/syllabus/0580_core
 ..etc ( file app.py)
 ```
+[ NOTE: do not use any tool which insert images (png/jpeg..etc) into this context .. you cannot handle images .. inserting an image will cause you to freeze ]
 
 ## Database Schema
 
@@ -175,10 +167,8 @@ Syllabus data is parsed from JSON files in the `syllabuses/` directory:
 ## Common Development Tasks
 
 ### React Development Workflow
-1. **Development**: Run `npm run dev` in React app directories
-2. **Testing**: Test components with development server on localhost:3000
-3. **Building**: Run `npm run build` to generate production builds
-4. **Deployment**: Run `./deploy.sh` to deploy built React apps and Flask backend
+1. **Deployment**: Run `./deploy.sh` to deploy built React apps and Flask backend
+2. **Testing**: always test the app on the vps after deployment
 
 ### Adding New Syllabus
 1. Add JSON file to `syllabuses/` directory
@@ -200,6 +190,8 @@ Syllabus data is parsed from JSON files in the `syllabuses/` directory:
 - Test on production URL: https://mamounelkheir.com/tracker
 - Use Playwright MCP (if available) for automated browser testing
 - Test both student and teacher React applications in production environment
+- deploying will earse the old database
+- If you want to test the Dashboard after fresh deplyment .. make sure to create some test student by navigating to mamounelkheir.com/tracker and login 
 
 **Testing Workflow:**
 1. Make code changes locally
@@ -246,4 +238,3 @@ The deployment script (`deploy.sh`) excludes:
 
 
 
-[ NOTE: do not use any tool which insert images (png/jpeg..etc) into this context .. you cannot handle images .. inserting an image will cause you to freeze ]

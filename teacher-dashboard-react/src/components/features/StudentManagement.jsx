@@ -284,7 +284,7 @@ function StudentManagement() {
                       {student.syllabuses.map(syllabus => (
                         <div key={syllabus.syllabus_name} className="bg-blue-50 text-blue-700 px-3 py-2 rounded-full text-sm flex items-center space-x-2 min-h-[36px]">
                           <span className="text-xs sm:text-sm">{syllabus.syllabus_name}</span>
-                          <span className="text-xs bg-blue-200 px-2 py-1 rounded">{syllabus.progress_percentage}%</span>
+                          <span className="text-xs bg-blue-200 px-2 py-1 rounded">{Math.round(syllabus.progress_percentage)}%</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

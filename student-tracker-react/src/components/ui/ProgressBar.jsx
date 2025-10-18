@@ -7,6 +7,7 @@ function ProgressBar({
   showStats = true
 }) {
   const safePercentage = Math.max(0, Math.min(100, percentage))
+  const roundedPercentage = Math.round(safePercentage)
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-100 shadow-sm transition-all duration-300">
@@ -24,20 +25,20 @@ function ProgressBar({
             className="bg-gradient-to-r from-green-500 to-teal-500 h-full rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-500 ease-out"
             style={{ width: `${safePercentage}%` }}
           >
-            {safePercentage > 10 ? `${safePercentage}%` : ''}
+            {safePercentage > 10 ? `${roundedPercentage}%` : ''}
           </div>
         </div>
         {/* Show percentage outside bar when too small */}
         {safePercentage <= 10 && (
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-700 font-medium text-sm">
-            {safePercentage}%
+            {roundedPercentage}%
           </div>
         )}
       </div>
 
       {showStats && (
         <div className="flex justify-between items-center mt-4">
-          <div className="text-4xl font-bold text-gray-800">{safePercentage}%</div>
+          <div className="text-4xl font-bold text-gray-800">{roundedPercentage}%</div>
           <div className="text-gray-700 font-medium bg-white px-3 py-2 rounded-lg border border-gray-200">
             {completed}/{total} topics completed
           </div>

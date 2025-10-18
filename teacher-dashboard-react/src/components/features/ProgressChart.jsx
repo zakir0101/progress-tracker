@@ -22,7 +22,7 @@ ChartJS.register(
 )
 
 function ProgressChart() {
-  const { displayedStudents } = useDashboardStore()
+  const { displayedStudents, allStudentsProgress } = useDashboardStore()
 
   const chartData = React.useMemo(() => {
     const progressRanges = {
@@ -32,7 +32,10 @@ function ProgressChart() {
       '75-100': 0
     }
 
-    displayedStudents.forEach(student => {
+    // Use allStudentsProgress if displayedStudents is empty
+    const studentsToUse = displayedStudents.length > 0 ? displayedStudents : allStudentsProgress.filter(s => s.syllabus_name !== 'contact')
+
+    studentsToUse.forEach(student => {
       const progress = student.progress_percentage || 0
       if (progress <= 25) progressRanges['0-25']++
       else if (progress <= 50) progressRanges['25-50']++
@@ -67,7 +70,7 @@ function ProgressChart() {
         },
       ],
     }
-  }, [displayedStudents])
+  }, [displayedStudents, allStudentsProgress])
 
   const options = {
     responsive: true,
