@@ -203,6 +203,41 @@ class DatabaseManager:
         conn.commit()
         conn.close()
 
+    def remove_student_from_syllabus(self, student_email, syllabus_id):
+        """Remove a student from a syllabus"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        # Remove syllabus assignment
+        cursor.execute(
+            """
+            DELETE FROM student_syllabus_assignments
+            WHERE student_email = ? AND syllabus_id = ?
+            """,
+            (student_email, syllabus_id)
+        )
+
+        # Remove student progress for this syllabus
+        cursor.execute(
+            """
+            DELETE FROM student_progress
+            WHERE student_email = ? AND syllabus_id = ?
+            """,
+            (student_email, syllabus_id)
+        )
+
+        # Remove topic updates for this syllabus
+        cursor.execute(
+            """
+            DELETE FROM topic_updates
+            WHERE student_email = ? AND syllabus_id = ?
+            """,
+            (student_email, syllabus_id)
+        )
+
+        conn.commit()
+        conn.close()
+
     def get_student_syllabuses(self, student_email):
         """Get all syllabuses assigned to a student"""
         conn = self.get_connection()
@@ -498,7 +533,8 @@ class DatabaseManager:
                 SELECT id, chapter_name, topic_name, topic_number, weight
                 FROM syllabus_topics
                 WHERE variant_id = ?
-                ORDER BY chapter_name, topic_number
+                ORDER BY CAST(SUBSTR(id, INSTR(id, '_') + 1, INSTR(SUBSTR(id, INSTR(id, '_') + 1), '_') - 1) AS INTEGER),
+                         topic_number
                 """,
                 (variant_id,)
             )

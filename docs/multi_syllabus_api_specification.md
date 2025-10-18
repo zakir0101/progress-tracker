@@ -3,6 +3,12 @@
 ## Overview
 This document describes the complete API specification for the IGCSE Multi-Syllabus Progress Tracker system. The system supports tracking student progress across multiple IGCSE syllabuses with per-syllabus progress tracking and flexible syllabus assignment.
 
+## Architecture Overview
+- **Backend**: Flask Python API with SQLite database
+- **Frontend**: React 18 applications with Vite build system
+- **Authentication**: Google OAuth 2.0
+- **Build System**: React applications built with Vite, served by Flask
+
 ## Base URL
 ```
 https://zakir.mamounelkheir.com/tracker
@@ -396,37 +402,59 @@ Health check endpoint.
 
 ## Example Usage
 
-### Student Tracking Progress
+### React Frontend Integration
+
+#### Student Tracker React App
 ```javascript
 // Update topic progress
-fetch('/tracker/update-topic', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    student_email: 'student@example.com',
-    student_name: 'Student Name',
-    syllabus_id: '0580',
-    topic_id: '0580_core_1_1',
-    is_completed: true
-  })
-});
+const updateTopic = async (studentEmail, studentName, syllabusId, topicId, isCompleted) => {
+  const response = await fetch('/tracker/update-topic', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      student_email: studentEmail,
+      student_name: studentName,
+      syllabus_id: syllabusId,
+      topic_id: topicId,
+      is_completed: isCompleted
+    })
+  });
+  return await response.json();
+};
 
 // Get assigned syllabuses
-fetch('/tracker/student-syllabuses?student_email=student@example.com');
+const getStudentSyllabuses = async (studentEmail) => {
+  const response = await fetch(`/tracker/student-syllabuses?student_email=${studentEmail}`);
+  return await response.json();
+};
 ```
 
-### Teacher Assigning Syllabus
+#### Teacher Dashboard React App
 ```javascript
 // Assign syllabus to student
-fetch('/tracker/assign-syllabus', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    student_email: 'student@example.com',
-    syllabus_id: '0580'
-  })
-});
+const assignSyllabus = async (studentEmail, syllabusId) => {
+  const response = await fetch('/tracker/assign-syllabus', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      student_email: studentEmail,
+      syllabus_id: syllabusId
+    })
+  });
+  return await response.json();
+};
 
 // Get all student progress
-fetch('/tracker/all-progress');
+const getAllProgress = async () => {
+  const response = await fetch('/tracker/all-progress');
+  return await response.json();
+};
+```
+
+### React Environment Configuration
+Both React applications use environment variables:
+```javascript
+// In React components
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 ```

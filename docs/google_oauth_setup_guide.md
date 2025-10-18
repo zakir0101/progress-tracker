@@ -41,41 +41,68 @@ This guide explains how to set up Google OAuth authentication for both the Stude
 
 6. Create separate client IDs for different environments if needed
 
-## Step 4: Update HTML Files
+## Step 4: Configure React Applications
 
-Replace `YOUR_GOOGLE_OAUTH_CLIENT_ID` in both files:
+Update the Google OAuth client ID in React environment files:
 
-### Student Tracker (`student_tracker.html`)
-```html
-<div id="g_id_onload"
-  data-client_id="YOUR_ACTUAL_CLIENT_ID_HERE"
-  ...>
-</div>
+### Student Tracker React App (`student-tracker-react/.env`)
+```
+VITE_GOOGLE_CLIENT_ID=your_actual_client_id_here
+VITE_API_BASE_URL=http://localhost:5000
 ```
 
-### Teacher Dashboard (`teacher_dashboard.html`)
-```html
-<div id="g_id_onload"
-  data-client_id="YOUR_ACTUAL_CLIENT_ID_HERE"
-  ...>
-</div>
+### Teacher Dashboard React App (`teacher-dashboard-react/.env`)
 ```
+VITE_GOOGLE_CLIENT_ID=your_actual_client_id_here
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+The React applications will use these environment variables to configure Google OAuth.
 
 ## Step 5: Test the Setup
 
-1. Open the HTML files in a web server (not directly from file system)
-2. Click the Google Sign-In button
-3. You should see the Google OAuth popup
-4. After authentication, the user interface should switch to authenticated mode
+### Test React Applications
+1. Start React development servers:
+```bash
+cd student-tracker-react && npm run dev
+cd teacher-dashboard-react && npm run dev
+```
+
+2. Access the applications:
+   - Student Tracker: `http://localhost:5173`
+   - Teacher Dashboard: `http://localhost:5174`
+
+3. Click the Google Sign-In button
+4. You should see the Google OAuth popup
+5. After authentication, the React interface should switch to authenticated mode
+
+### Test Production Build
+1. Build React applications:
+```bash
+cd student-tracker-react && npm run build
+cd teacher-dashboard-react && npm run build
+```
+
+2. Start Flask server:
+```bash
+python app.py
+```
+
+3. Access the applications:
+   - Student Tracker: `http://localhost:5000`
+   - Teacher Dashboard: `http://localhost:5000/dashboard`
+
+4. Test Google OAuth in production mode
 
 ## Common Issues and Solutions
 
 ### Issue 1: "invalid_client" Error
 - **Cause**: Incorrect client ID or unauthorized domain
 - **Solution**:
-  - Verify the client ID matches exactly
+  - Verify the client ID matches exactly in React environment files
   - Ensure your domain is in authorized JavaScript origins
   - Check if the OAuth consent screen is configured properly
+  - Verify React environment variables are loaded correctly
 
 ### Issue 2: Popup Blocked
 - **Cause**: Browser blocking popups
@@ -88,7 +115,15 @@ Replace `YOUR_GOOGLE_OAUTH_CLIENT_ID` in both files:
   - Verify internet connection
   - Ensure Google Identity Services script is loading
 
-### Issue 4: CORS Errors
+### Issue 4: React Environment Variables Not Loading
+- **Cause**: Environment variables not properly configured in React apps
+- **Solution**:
+  - Ensure environment variables start with `VITE_` prefix
+  - Restart React development server after changing environment variables
+  - Check that `.env` files are in the correct React app directories
+  - Verify environment variables are accessed via `import.meta.env.VITE_VARIABLE_NAME`
+
+### Issue 5: CORS Errors
 - **Cause**: Cross-origin requests blocked
 - **Solution**: Serve files from a web server, not file:// protocol
 

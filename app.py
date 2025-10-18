@@ -46,15 +46,33 @@ def home():
     )
 
 
-# Serve static HTML files
+# Serve React applications
 @app.route(f"{BASE_URL}/")
 def serve_student_tracker():
-    return send_from_directory(".", "student_tracker.html")
+    return send_from_directory("public/student", "index.html")
 
 
 @app.route(f"{BASE_URL}/dashboard")
 def serve_teacher_dashboard():
-    return send_from_directory(".", "teacher_dashboard.html")
+    return send_from_directory("public/teacher", "index.html")
+
+
+# Serve static assets for React apps
+@app.route(f"{BASE_URL}/assets/<path:filename>")
+def serve_student_tracker_static(filename):
+    # Try student app first, then teacher app
+    if os.path.exists(os.path.join("public", "student", "assets", filename)):
+        return send_from_directory("public/student/assets", filename)
+    else:
+        return send_from_directory("public/teacher/assets", filename)
+
+
+@app.route(f"{BASE_URL}/vite.svg")
+def serve_vite_svg():
+    # Serve vite.svg from student app (both apps use the same icon)
+    return send_from_directory(
+        "public", "mamoun_logo.png"
+    )  # public/student , vite.svg
 
 
 # ========== STUDENT API ENDPOINTS ==========
@@ -460,6 +478,61 @@ def assign_syllabus():
         )
 
 
+@app.route(f"{BASE_URL}/remove-syllabus", methods=["POST"])
+def remove_syllabus():
+    """Remove a syllabus from a student"""
+    try:
+        data = request.get_json()
+        if not data:
+            return (
+                jsonify({"success": False, "error": "Invalid JSON data"}),
+                400,
+            )
+
+        student_email = data.get("student_email")
+        syllabus_id = data.get("syllabus_id")
+
+        if not all([student_email, syllabus_id]):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Missing required parameters: student_email, syllabus_id",
+                    }
+                ),
+                400,
+            )
+
+        # Rate limiting
+        if not rate_limit_check("teacher_dashboard"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Rate limit exceeded. Please try again later.",
+                    }
+                ),
+                429,
+            )
+
+        db.remove_student_from_syllabus(student_email, syllabus_id)
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Syllabus {syllabus_id} removed from student {student_email}",
+            }
+        )
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"success": False, "error": f"Internal server error: {str(e)}"}
+            ),
+            500,
+        )
+
+
 # ========== BACKWARD COMPATIBILITY ENDPOINTS ==========
 
 
@@ -557,4 +630,3 @@ if __name__ == "__main__":
 
     # Run the application
     app.run(host="0.0.0.0", port=port, debug=True)
-

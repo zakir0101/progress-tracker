@@ -87,6 +87,21 @@ clear_remote_dir() {
     check_success "Remote directory cleared (venv preserved)" "Failed to clear remote directory"
 }
 
+# Function to build React applications
+build_react_apps() {
+    print_status "Building React applications..."
+
+    # Build student tracker React app
+    cd student-tracker-react && npm run build
+    check_success "Student tracker React app built" "Failed to build student tracker React app"
+    cd ..
+
+    # Build teacher dashboard React app
+    cd teacher-dashboard-react && npm run build
+    check_success "Teacher dashboard React app built" "Failed to build teacher dashboard React app"
+    cd ..
+}
+
 # Function to copy files to VPS (excluding old/, tmp/, github-deployment/, venv/)
 copy_files_to_vps() {
 
@@ -101,16 +116,17 @@ copy_files_to_vps() {
         --exclude='venv/' \
         --exclude='.git/' \
         --exclude='.claude/' \
+        --exclude='.docs/' \
         --exclude='igcse_progress.db' \
-        --exclude='google_oauth_setup_guide.md' \
-        --exclude='unified_setup_guide.md' \
-        --exclude='unified_api_specification.md' \
-        --exclude='system_test_checklist.md' \
         --exclude='.env' \
         --exclude='*.log' \
         --exclude='__pycache__/' \
+        --exclude='student-tracker-react/' \
+        --exclude='teacher-dashboard-react/' \
         "${LOCAL_DIR}/" "${TEMP_DIR}/" > /dev/null
 
+    # --exclude='student_tracker/' \
+    # --exclude='teacher_dashboard/' \
     # Copy to VPS
     rsync -av --progress -e ssh \
         "${TEMP_DIR}/" "${VPS_USER}@${VPS_HOST}:${REMOTE_DIR}/" > /dev/null
@@ -157,6 +173,12 @@ main() {
     clear_remote_dir
     echo "================================================================================="
 
+    # Build React applications
+    print_status "Building React applications..."
+    # sleep ${sleep_time}
+    build_react_apps
+    echo "================================================================================="
+
     # Copy files to VPS
     print_status "Copying files to VPS (excluding old/, tmp/, github-deployment/, venv/)..."
     # sleep ${sleep_time}
@@ -166,9 +188,12 @@ main() {
 
     ssh_with_retry "
         cd ${REMOTE_DIR} &&
-          bash start_server.sh 
+          chmod +x start_server.sh &&
+          nohup ./start_server.sh  &
         "
 
+    # Adding optional sleep to give the server some time to start
+    sleep 3 
 
 }
 

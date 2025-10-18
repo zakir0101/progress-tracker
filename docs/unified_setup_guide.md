@@ -12,9 +12,15 @@ This system provides a complete solution for tracking IGCSE student progress acr
 ## File Structure
 ```
 /home/zakir/tmp/
-├── student_tracker.html          # Student interface with multi-syllabus support
-├── teacher_dashboard.html        # Teacher dashboard with syllabus assignment
-├── app.py                        # Flask backend API with multi-syllabus endpoints
+├── student-tracker-react/        # React application for student progress tracking
+│   ├── src/                      # React components and logic
+│   ├── package.json              # Dependencies and build scripts
+│   └── dist/                     # Built application (production)
+├── teacher-dashboard-react/      # React application for teacher management
+│   ├── src/                      # React components and state management
+│   ├── package.json              # Dependencies and build scripts
+│   └── dist/                     # Built application (production)
+├── app.py                        # Flask backend API with React app serving
 ├── database.py                   # SQLite database with multi-syllabus schema
 ├── template_converter.py         # Syllabus parser for multiple subjects
 ├── syllabuses/                   # Directory containing syllabus JSON files
@@ -55,47 +61,75 @@ python app.py
 ```bash
 gunicorn app:app --bind 0.0.0.0:5000
 ```
-## Step 2: Configure Frontend Applications
+## Step 2: Set Up React Frontend Applications
 
-### 2.1 Configure Student Interface
-1. Open `student_tracker.html`
-2. Find the API configuration section (around line 429):
-```javascript
-const API_CONFIG = {
-  BASE_URL: 'http://localhost:5000',
-  SESSION_TIMEOUT: 60 * 60 * 1000
-};
+### 2.1 Install Node.js Dependencies
+1. Navigate to each React application directory:
+```bash
+cd student-tracker-react
+npm install
+
+cd teacher-dashboard-react
+npm install
 ```
-3. Replace `BASE_URL` with your server URL (e.g., `http://your-vps-ip:5000`)
 
-### 2.2 Configure Teacher Dashboard
-1. Open `teacher_dashboard.html`
-2. Find the API configuration section (around line 420):
-```javascript
-const API_CONFIG = {
-  BASE_URL: 'http://localhost:5000',
-  SESSION_TIMEOUT: 60 * 60 * 1000
-};
+### 2.2 Configure API Endpoints
+Each React application has environment configuration:
+
+**Student Tracker** (`student-tracker-react/.env`):
 ```
-3. Replace `BASE_URL` with your server URL (e.g., `http://your-vps-ip:5000`)
+VITE_API_BASE_URL=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
 
-### 2.3 Configure Google OAuth (REQUIRED)
+**Teacher Dashboard** (`teacher-dashboard-react/.env`):
+```
+VITE_API_BASE_URL=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+### 2.3 Development Mode
+Run React applications in development mode:
+```bash
+# Student tracker (port 5173)
+cd student-tracker-react
+npm run dev
+
+# Teacher dashboard (port 5174)
+cd teacher-dashboard-react
+npm run dev
+```
+
+### 2.4 Production Build
+Build React applications for production:
+```bash
+cd student-tracker-react
+npm run build  # Outputs to student_tracker/
+
+cd teacher-dashboard-react
+npm run build  # Outputs to teacher_dashboard/
+```
+
+The Flask backend automatically serves the built React applications.
+
+### 2.5 Configure Google OAuth (REQUIRED)
 For user identification and security, configure Google OAuth:
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Create a new project or select existing
 3. Enable Google Identity Services API
 4. Create OAuth 2.0 credentials
-5. Update `data-client_id` in both HTML files
+5. Update `VITE_GOOGLE_CLIENT_ID` in React app environment files
 6. Configure authorized domains for your VPS/server
 
 ## Step 3: Host the Applications
 
 ### Option A: Self-Hosted VPS (Recommended)
-1. Upload all files to your VPS
-2. Install Python and dependencies
-3. Configure your web server (Nginx/Apache) to serve the Flask app
-4. Serve static HTML files from the same domain
-5. Configure SSL certificates for HTTPS
+1. Build React applications: `npm run build` in each React app directory
+2. Upload all files to your VPS
+3. Install Python and dependencies
+4. Configure your web server (Nginx/Apache) to serve the Flask app
+5. Flask serves the built React applications automatically
+6. Configure SSL certificates for HTTPS
 
 ### Option B: Shared Hosting with Python Support
 1. Upload all files to your hosting provider
@@ -131,20 +165,32 @@ Teachers can manually register students via the dashboard.
 ## Step 5: Testing the System
 
 ### 5.1 Test Student Interface
-1. Open student interface URL
+1. Open student interface URL: `http://your-domain.com/tracker`
 2. Sign in with Google
 3. Check some topics as completed
 4. Verify progress calculation
 5. Submit progress
-6. Check Google Sheets for data
+6. Verify real-time updates work
 
 ### 5.2 Test Teacher Dashboard
-1. Open teacher dashboard URL
+1. Open teacher dashboard URL: `http://your-domain.com/tracker/dashboard`
 2. Sign in with Google
 3. Verify student list appears
 4. Check statistics and charts
 5. Test search and filter functionality
 6. Export data to CSV
+
+### 5.3 Test React Development Mode
+1. Start React development servers:
+```bash
+cd student-tracker-react && npm run dev
+cd teacher-dashboard-react && npm run dev
+```
+2. Access development URLs:
+   - Student: `http://localhost:5173`
+   - Teacher: `http://localhost:5174`
+3. Test all functionality in development mode
+4. Verify hot reload works
 
 ### 5.3 Verify Data Flow
 1. Check the SQLite database file `igcse_progress.db`
@@ -208,8 +254,14 @@ Teachers can manually register students via the dashboard.
 
 ### Common Issues
 
+#### React Apps Not Loading
+- Verify React applications were built: `npm run build`
+- Check if built files exist in `student_tracker/` and `teacher_dashboard/` directories
+- Ensure Flask server is running and serving the React apps
+- Check browser console for React errors
+
 #### Form Not Submitting
-- Check API configuration in HTML files
+- Check API configuration in React environment files
 - Verify Flask server is running
 - Check browser console for errors
 - Ensure CORS is properly configured

@@ -76,19 +76,26 @@ GET  /syllabus              # Backward compatibility
 GET  /test                  # Health check
 ```
 
-## Frontend Changes
+## Frontend Applications
 
-### Student Interface (`student_tracker.html`)
+### Student Tracker React App (`student-tracker-react/`)
+- **React 18**: Modern React application with Vite build system
 - **Syllabus Selector**: Dropdown to switch between assigned syllabuses
 - **Dynamic Content**: Syllabus content loads based on selection
 - **Progress Tracking**: Per-syllabus progress calculation
 - **Contact Syllabus**: Hidden when other syllabuses are assigned
+- **Development**: `npm run dev` (port 5173)
+- **Production**: `npm run build` (outputs to `student_tracker/`)
 
-### Teacher Dashboard (`teacher_dashboard.html`)
+### Teacher Dashboard React App (`teacher-dashboard-react/`)
+- **React 18**: React application with Zustand state management
 - **Syllabus Assignment**: Form to assign syllabuses to students
 - **Syllabus Filtering**: Filter student view by syllabus
 - **Multi-Syllabus Stats**: Statistics across all syllabuses
 - **Enhanced Export**: CSV includes syllabus information
+- **Charts**: Chart.js integration for data visualization
+- **Development**: `npm run dev` (port 5174)
+- **Production**: `npm run build` (outputs to `teacher_dashboard/`)
 
 ## Configuration
 
@@ -118,20 +125,29 @@ GET  /test                  # Health check
 
 ### Common Issues
 
+**React Apps Not Loading**
+- Verify React applications were built: `npm run build`
+- Check if built files exist in `student_tracker/` and `teacher_dashboard/`
+- Ensure Flask server is running and serving React apps
+- Check browser console for React errors
+
 **Student can't see syllabuses**
 - Check if student has syllabuses assigned
 - Verify contact syllabus is not being hidden
 - Check browser console for API errors
+- Verify React app is properly configured
 
 **Progress not updating**
 - Verify syllabus_id is being sent in requests
 - Check database connection
 - Verify topic IDs exist in syllabus
+- Check React component state management
 
 **Teacher can't assign syllabus**
 - Verify student email exists
 - Check if syllabus is already assigned
 - Verify API endpoint is accessible
+- Check React state management in teacher dashboard
 
 ### Debug Tips
 - Check browser developer console for errors

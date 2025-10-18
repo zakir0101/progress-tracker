@@ -1,6 +1,6 @@
 # IGCSE Multi-Syllabus Progress Tracker
 
-A modern web application for tracking student progress across multiple IGCSE syllabuses. Built with Flask backend and responsive HTML/CSS/JavaScript frontend.
+A modern web application for tracking student progress across multiple IGCSE syllabuses. Built with Flask backend and React frontend applications using modern web technologies.
 
 ## 🎯 Target Audience
 
@@ -39,15 +39,17 @@ Once deployed, access the application at your configured domain path (typically 
 
 ### Architecture
 - **Backend**: Flask with SQLite database
-- **Frontend**: Vanilla JavaScript with responsive CSS
+- **Frontend**: React 18 applications with Vite build system
+- **Styling**: Tailwind CSS for responsive design
 - **Authentication**: Google OAuth 2.0
 - **Deployment**: VPS with Traefik reverse proxy
 
 ### Core Components
-- `app.py` - Main Flask application with API endpoints
+- `app.py` - Main Flask application with API endpoints and React app serving
 - `database.py` - Database management with multi-syllabus schema
-- `student_tracker.html` - Student-facing progress interface
-- `teacher_dashboard.html` - Teacher management dashboard
+- `student-tracker-react/` - React application for student progress tracking
+- `teacher-dashboard-react/` - React application for teacher management
+- `template_converter.py` - Syllabus data parser
 
 ## 📚 Available Syllabuses
 
@@ -69,12 +71,23 @@ Each syllabus contains structured topics organized by chapters, with automatic p
 # Start the Flask server
 python app.py
 
-# Access the application
-http://localhost:5000
+# For React development (separate terminal)
+cd student-tracker-react && npm run dev
+cd teacher-dashboard-react && npm run dev
+
+# Access the applications
+http://localhost:5000              # Student interface
+http://localhost:5000/dashboard    # Teacher dashboard
+http://localhost:5173              # React dev server (student)
+http://localhost:5174              # React dev server (teacher)
 ```
 
 ### Production Deployment
 ```bash
+# Build React applications
+cd student-tracker-react && npm run build
+cd teacher-dashboard-react && npm run build
+
 # Deploy to VPS
 ./deploy.sh
 
@@ -96,7 +109,9 @@ For detailed technical documentation, see:
 - [API Specification](docs/multi_syllabus_api_specification.md)
 - [Quick Reference](docs/multi_syllabus_quick_reference.md)
 - [Setup Guide](docs/unified_setup_guide.md)
-- [Database Schema](database_schema_design.md)
+- [Database Schema](docs/database_schema_design.md)
+- [Google OAuth Setup](docs/google_oauth_setup_guide.md)
+- [System Test Checklist](docs/system_test_checklist.md)
 
 ## 🔒 Security Features
 
@@ -104,6 +119,30 @@ For detailed technical documentation, see:
 - **Google OAuth**: Secure authentication
 - **Session Management**: Automatic session expiration
 - **Input Validation**: Server-side validation for all API endpoints
+
+## ⚛️ React Architecture
+
+### Frontend Applications
+- **Student Tracker React App**: Modern React 18 application with Vite build system
+- **Teacher Dashboard React App**: React application with Zustand state management and Chart.js
+- **Build System**: Vite for fast development and optimized production builds
+- **Styling**: Tailwind CSS for responsive design and consistent UI
+
+### Development Workflow
+```bash
+# Development mode
+cd student-tracker-react && npm run dev  # Starts on http://localhost:5173
+cd teacher-dashboard-react && npm run dev  # Starts on http://localhost:5174
+
+# Production build
+cd student-tracker-react && npm run build  # Outputs to student_tracker/
+cd teacher-dashboard-react && npm run build  # Outputs to teacher_dashboard/
+```
+
+### State Management
+- **Student App**: React hooks and context for state management
+- **Teacher App**: Zustand for complex state management with charts and filters
+- **API Integration**: React Query patterns for efficient data fetching
 
 ## 📱 User Experience
 

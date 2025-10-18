@@ -6,3 +6,8 @@ venv/
 igcse_progress.db
 __pycache__/
 github-deployment/
+.playwright-mcp/
+public/student/
+public/teacher/
+node_modules/
+package-lock.json
