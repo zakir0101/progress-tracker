@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import db
+from database import db, DatabaseManager
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -619,6 +619,153 @@ def initialize():
             ),
             500,
         )
+
+
+# Backup management endpoints
+@app.route(f"{BASE_URL}/backups", methods=["GET"])
+def list_backups():
+    """List all available backup files"""
+    try:
+        backup_dir = "/home/zakir/igcse-tracker-backups"
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir, mode=0o755, exist_ok=True)
+
+        backups = []
+        for filename in os.listdir(backup_dir):
+            if filename.endswith(".db"):
+                filepath = os.path.join(backup_dir, filename)
+                stat = os.stat(filepath)
+                backups.append({
+                    "name": filename,
+                    "size": stat.st_size,
+                    "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
+                })
+
+        # Sort by modification time (newest first)
+        backups.sort(key=lambda x: x["modified"], reverse=True)
+
+        return jsonify({"success": True, "backups": backups})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to list backups: {str(e)}"}), 500
+
+
+@app.route(f"{BASE_URL}/backups/create", methods=["POST"])
+def create_backup():
+    """Create a new backup of the current database"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Invalid JSON data"}), 400
+
+        backup_name = data.get("name", "")
+        if not backup_name:
+            return jsonify({"success": False, "error": "Backup name is required"}), 400
+
+        # Ensure backup name is safe
+        backup_name = "".join(c for c in backup_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        if not backup_name:
+            return jsonify({"success": False, "error": "Invalid backup name"}), 400
+
+        backup_dir = "/home/zakir/igcse-tracker-backups"
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir, mode=0o755, exist_ok=True)
+
+        # Add timestamp to filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{backup_name}_{timestamp}.db"
+        filepath = os.path.join(backup_dir, filename)
+
+        # Copy current database to backup
+        import shutil
+        shutil.copy2("igcse_progress.db", filepath)
+
+        return jsonify({
+            "success": True,
+            "message": f"Backup '{backup_name}' created successfully",
+            "filename": filename
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to create backup: {str(e)}"}), 500
+
+
+@app.route(f"{BASE_URL}/backups/restore", methods=["POST"])
+def restore_backup():
+    """Restore database from a backup file"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Invalid JSON data"}), 400
+
+        filename = data.get("filename")
+        if not filename:
+            return jsonify({"success": False, "error": "Backup filename is required"}), 400
+
+        backup_dir = "/home/zakir/igcse-tracker-backups"
+        filepath = os.path.join(backup_dir, filename)
+
+        # Validate file exists and is a database file
+        if not os.path.exists(filepath):
+            return jsonify({"success": False, "error": "Backup file not found"}), 404
+
+        if not filename.endswith(".db"):
+            return jsonify({"success": False, "error": "Invalid backup file"}), 400
+
+        # Create a backup of current database before restoring
+        current_backup_path = f"igcse_progress_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+        import shutil
+        shutil.copy2("igcse_progress.db", current_backup_path)
+
+        # Restore from backup
+        shutil.copy2(filepath, "igcse_progress.db")
+
+        # Reinitialize database connection
+        global db
+        db = DatabaseManager()
+
+        return jsonify({
+            "success": True,
+            "message": f"Database restored from backup '{filename}' successfully"
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to restore backup: {str(e)}"}), 500
+
+
+@app.route(f"{BASE_URL}/backups/delete", methods=["POST"])
+def delete_backup():
+    """Delete a backup file"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Invalid JSON data"}), 400
+
+        filename = data.get("filename")
+        if not filename:
+            return jsonify({"success": False, "error": "Backup filename is required"}), 400
+
+        backup_dir = "/home/zakir/igcse-tracker-backups"
+        filepath = os.path.join(backup_dir, filename)
+
+        # Validate file exists and is a database file
+        if not os.path.exists(filepath):
+            return jsonify({"success": False, "error": "Backup file not found"}), 404
+
+        if not filename.endswith(".db"):
+            return jsonify({"success": False, "error": "Invalid backup file"}), 400
+
+        # Delete the backup file
+        os.remove(filepath)
+
+        return jsonify({
+            "success": True,
+            "message": f"Backup '{filename}' deleted successfully"
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to delete backup: {str(e)}"}), 500
 
 
 if __name__ == "__main__":

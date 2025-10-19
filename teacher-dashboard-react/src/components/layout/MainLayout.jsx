@@ -5,6 +5,7 @@ import DashboardContent from '../features/DashboardContent'
 import StudentManagement from '../features/StudentManagement'
 import SyllabusAssignmentView from '../features/SyllabusAssignmentView'
 import AnalyticsView from '../features/AnalyticsView'
+import BackupManagement from '../features/BackupManagement'
 import Navigation from './Navigation'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -33,6 +34,8 @@ function MainLayout() {
         return <SyllabusAssignmentView />
       case 'analytics':
         return <AnalyticsView />
+      case 'backups':
+        return <BackupManagement />
       default:
         return <DashboardContent />
     }
