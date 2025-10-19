@@ -1,4 +1,3 @@
-
 import collections
 import enum
 import json
@@ -10,13 +9,9 @@ from os.path import sep
 # from frappe.utils import get_bench_path
 
 
-
-
 def do_somethinkg_with_courses(reset: bool):
     pass
-    # NOTE:  below is refrence code on how you could use the classes and method of this file . to parse syllabus .json files and convert them into textual format like those in ./syllabus-new/0580-example.txt file .. each subject should then have its own file .. put the result in 
- 
-
+    # NOTE:  below is refrence code on how you could use the classes and method of this file . to parse syllabus .json files and convert them into textual format like those in ./syllabus-new/0580-example.txt file .. each subject should then have its own file .. put the result in
 
     # subjects_with_variants = ["9702", "0625", "0580"]
     # sub_dict: dict[str, Course] = load_subjects_files()
@@ -35,7 +30,7 @@ def do_somethinkg_with_courses(reset: bool):
     #
     #         course_doc = create_course(course, variant, reset)
     #         if not course_doc:
-    #             continue 
+    #             continue
     #
     #         for j, chapter in enumerate(variant.chapters):
     #
@@ -59,20 +54,14 @@ def do_somethinkg_with_courses(reset: bool):
     #                     counter += 1
 
 
-
-
-
-
-
-
-syllabus_path = os.path.join(
-    ".","syllabuses"
-)
+syllabus_path = os.path.join(".", "syllabuses")
 
 all_courses = [
-    f.split(".")[0] for f in os.listdir(syllabus_path) if f.endswith(".json")
+    f.split(".")[0]
+    for f in os.listdir(syllabus_path)
+    if f.endswith(".json") and len(f) == 9
 ]
-
+all_courses = ["0606", "0625", "0580", "9702", "9231", "9709"]  # "9709"
 igcse_courses = ["0606", "0625", "0580"]
 
 # ["9709", "9702", "9231", "0625", "0606", "0580"]
@@ -174,7 +163,7 @@ class Chapter:
             name = key
             if key != "examples":
                 name = (
-                    chap.get("name") #+ f"({key})"
+                    chap.get("name")  # + f"({key})"
                     if (depth > 0 and "name" in chap)
                     else key
                 )
@@ -236,7 +225,7 @@ class Course:
     def load_course_md_file(self, file_path):
 
         not os.path.exists(file_path) and self.raiseException(
-            f"somehow syllabus files for subject {id}.md"
+            f"somehow syllabus files for subject {file_path}.md  "
             + "could not be found !!"
         )
         f = open(file_path, "r", encoding="utf-8")
@@ -369,9 +358,9 @@ def generate_syllabus_database_data():
                         "id": f"{variant_id}_main",
                         "name": "Main",
                         "description": variant.description,
-                        "topics": []
+                        "topics": [],
                     }
-                }
+                },
             }
 
             # Extract topics from chapters
@@ -379,30 +368,40 @@ def generate_syllabus_database_data():
             for chapter in variant.chapters:
                 chapter_name = chapter.name
 
-                if hasattr(chapter, 'topics') and chapter.topics:
+                if hasattr(chapter, "topics") and chapter.topics:
                     # Course has topics within chapters
                     for topic_name, topic in chapter.topics.items():
-                        topic_id = f"{variant_id}_{chapter.number}_{topic.number}"
-                        syllabus_data[variant_id]["variants"][f"{variant_id}_main"]["topics"].append({
-                            "id": topic_id,
-                            "chapter_name": chapter_name,
-                            "topic_name": topic_name,
-                            "topic_number": topic.number,
-                            "description": topic.description,
-                            "weight": 1  # Default weight, can be adjusted
-                        })
+                        topic_id = (
+                            f"{variant_id}_{chapter.number}_{topic.number}"
+                        )
+                        syllabus_data[variant_id]["variants"][
+                            f"{variant_id}_main"
+                        ]["topics"].append(
+                            {
+                                "id": topic_id,
+                                "chapter_name": chapter_name,
+                                "topic_name": topic_name,
+                                "topic_number": topic.number,
+                                "description": topic.description,
+                                "weight": 1,  # Default weight, can be adjusted
+                            }
+                        )
                         topic_counter += 1
                 else:
                     # Course has chapters as topics (like 0606)
                     topic_id = f"{variant_id}_{chapter.number}_1"
-                    syllabus_data[variant_id]["variants"][f"{variant_id}_main"]["topics"].append({
-                        "id": topic_id,
-                        "chapter_name": chapter_name,
-                        "topic_name": chapter_name,  # Use chapter name as topic name
-                        "topic_number": 1,
-                        "description": chapter.description or "",
-                        "weight": 1
-                    })
+                    syllabus_data[variant_id]["variants"][
+                        f"{variant_id}_main"
+                    ]["topics"].append(
+                        {
+                            "id": topic_id,
+                            "chapter_name": chapter_name,
+                            "topic_name": chapter_name,  # Use chapter name as topic name
+                            "topic_number": 1,
+                            "description": chapter.description or "",
+                            "weight": 1,
+                        }
+                    )
                     topic_counter += 1
 
     return syllabus_data
@@ -428,7 +427,7 @@ def create_contact_syllabus():
                         "topic_name": "Contact Administrator",
                         "topic_number": 1,
                         "description": "Please contact the administrator to get enrolled in your desired courses.",
-                        "weight": 1
+                        "weight": 1,
                     },
                     {
                         "id": "contact_main_1_2",
@@ -436,11 +435,11 @@ def create_contact_syllabus():
                         "topic_name": "Enroll in Course",
                         "topic_number": 2,
                         "description": "Once you contact the administrator, you will be enrolled in the appropriate courses.",
-                        "weight": 1
-                    }
-                ]
+                        "weight": 1,
+                    },
+                ],
             }
-        }
+        },
     }
 
 
@@ -460,9 +459,9 @@ if __name__ == "__main__":
 
     for syllabus_id, syllabus in data.items():
         print(f"\nSyllabus: {syllabus['name']} ({syllabus_id})")
-        for variant_id, variant in syllabus['variants'].items():
+        for variant_id, variant in syllabus["variants"].items():
             print(f"  Variant: {variant['name']} ({variant_id})")
             print(f"    Topics: {len(variant['topics'])}")
             # Show first few topics
-            for topic in variant['topics'][:3]:
+            for topic in variant["topics"][:3]:
                 print(f"      - {topic['topic_name']}")

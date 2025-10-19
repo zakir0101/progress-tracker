@@ -39,7 +39,7 @@ function SyllabusContent({
         })
 
         return (
-          <div key={variantIndex} className="border border-gray-200 rounded-lg mb-6 overflow-hidden">
+          <div key={variantIndex} className="border border-gray-200 rounded-lg mb-6">
             <div
               className="section-header"
               onClick={() => toggleSection(variantIndex)}
@@ -49,12 +49,12 @@ function SyllabusContent({
             </div>
 
             <div
-              className={`transition-all duration-300 overflow-hidden ${
-                isExpanded ? 'max-h-[2000px] p-5' : 'max-h-0 p-0'
+              className={`transition-all duration-300 ${
+                isExpanded ? 'p-5' : 'max-h-0 p-0'
               }`}
             >
               {Object.entries(chapters).map(([chapterName, topics]) => (
-                <div key={chapterName} className="border border-gray-200 rounded mb-4 overflow-hidden">
+                <div key={chapterName} className="border border-gray-200 rounded mb-4">
                   <div className="chapter-header">
                     {chapterName}
                   </div>
