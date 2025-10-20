@@ -240,7 +240,8 @@ export const useDashboardStore = create((set, get) => ({
         matchesProgress = (student.progress_percentage || 0) >= min && (student.progress_percentage || 0) <= max
       }
 
-      // Exclude 'contact' syllabus from general view unless specifically selected
+      // Exclude 'contact' syllabus records from general view unless specifically selected
+      // But keep students who have other syllabuses
       if (selectedViewSyllabusId === 'all' && student.syllabus_name === 'Contact Syllabus') {
         return false
       }

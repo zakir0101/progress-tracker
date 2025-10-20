@@ -3,7 +3,6 @@ import AuthSection from '../features/AuthSection'
 import UserInfo from '../features/UserInfo'
 import DashboardContent from '../features/DashboardContent'
 import StudentManagement from '../features/StudentManagement'
-import SyllabusAssignmentView from '../features/SyllabusAssignmentView'
 import AnalyticsView from '../features/AnalyticsView'
 import BackupManagement from '../features/BackupManagement'
 import Navigation from './Navigation'
@@ -30,8 +29,6 @@ function MainLayout() {
         return <DashboardContent />
       case 'students':
         return <StudentManagement />
-      case 'assignments':
-        return <SyllabusAssignmentView />
       case 'analytics':
         return <AnalyticsView />
       case 'backups':

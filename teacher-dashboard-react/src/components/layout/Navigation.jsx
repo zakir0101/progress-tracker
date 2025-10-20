@@ -6,7 +6,6 @@ function Navigation({ currentView, onViewChange }) {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'students', label: 'Student Management', icon: '👨‍🎓' },
-    { id: 'assignments', label: 'Syllabus Assignment', icon: '📚' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'backups', label: 'Backup Management', icon: '💾' }
   ]
